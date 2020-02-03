@@ -50,16 +50,18 @@
 				};
 			}
 		</ParameterType>
-			<ParameterType Name="Integer">
+    <ParameterType Name="Integer">
 				return @{
 					Validate = 
 					{
 						Param([ConfigAutomationContext] $context, [object]$content)
 						if(-not ($content -is [String])){
 								$context.Error("'{white}$content{gray}' is of type {white}$($content.GetType().Name){gray}, expected {white}string{gray}")
+								return $false
 						}
 						if(-not ($content -match '^\d+$')){
 								$context.Error("'{white}$content{gray}' has non-digit characters which fails to parse as an {white}integer{gray}")
+								return $false
 						}
 						
 						return $true
