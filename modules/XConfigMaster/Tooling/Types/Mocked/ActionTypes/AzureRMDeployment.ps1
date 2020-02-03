@@ -165,11 +165,11 @@
 		}
 
 		$extracted = $action.Parameters().Extract(@("ResourceGroup", "Location", "Template", "TemplateParameters", "OverrideTemplateParameters", "OutputVariables"))
-		if(-not (Test-Path $extracted.Template)){
+		if(-not (Test-Path $extracted.Template) -and (-not $action.TestProperty("Validate", "AtRunTime", $true))){
 			$context.Error("Action {white}$($action.Name()){gray} of type {white}$($action.ActionType().Name()){gray} - Template {white}$($extracted.ScriptPath){gray} was not found`r`n{white}$($extracted.Template){gray}")
 			return $false
 		}
-		if(-not (Test-Path $extracted.TemplateParameters)){
+		if(-not (Test-Path $extracted.TemplateParameters) -and (-not $action.TestProperty("Validate", "AtRunTime", $true))){
 			$context.Error("Action {white}$($action.Name()){gray} of type {white}$($action.ActionType().Name()){gray} - Template {white}$($extracted.ScriptPath){gray} was not found{white}$($extracted.TemplateParameters){gray}")
 			return $false
 		}
