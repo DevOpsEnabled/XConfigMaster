@@ -8,7 +8,7 @@ trigger:
   paths:
     include:
     - modules/XConfigMaster
-pr: none 
+    
 
 variables:
 - template: xpipeline-template-variables.yml
