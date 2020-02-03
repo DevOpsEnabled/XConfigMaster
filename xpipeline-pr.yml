@@ -1,0 +1,20 @@
+
+name: $(XConfigMaster.Major).$(XConfigMaster.Minor).$(Rev:r)-prerelease
+
+trigger: none
+pr:
+  branches:
+    include:
+    - master
+
+variables:
+  - template: xpipeline-template-variables.yml
+  
+jobs:
+  - template: xpipeline-template-base.yml
+          
+    
+
+
+    
+   

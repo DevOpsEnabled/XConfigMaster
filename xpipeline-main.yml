@@ -1,0 +1,24 @@
+
+name: 2.0.0.$(Rev:r)
+
+trigger:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - modules/XConfigMaster
+    
+
+variables:
+- template: xpipeline-template-variables.yml
+
+jobs:
+  - template: xpipeline-template-base.yml
+          
+          
+    
+
+
+    
+   

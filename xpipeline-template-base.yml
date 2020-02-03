@@ -1,20 +1,4 @@
 
-name: 2.0.0.$(Rev:r)
-
-trigger:
-  branches:
-    include:
-    - master
-  paths:
-    include:
-    - modules/XConfigMaster
-    
-
-variables:
-- group: secrets-base
-- group: variables-base
-- name: ModulePath
-  value: $(System.DefaultWorkingDirectory)/modules/XConfigMaster
 
 jobs:
   - job: publish
