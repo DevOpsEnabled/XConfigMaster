@@ -1,64 +1,37 @@
 
-name: PSFiddle.Common.$(Rev:r)
+name: 2.0.0.$(Rev:r)
 
- 
 trigger:
   branches:
     include:
     - master
   paths:
     include:
-    - src/pkgs/powershellgallery/powershell/*
-    - cli/templates/base.yml
+    - modules/XConfigMaster
     
 
 variables:
-- template: /cli/templates/base-variables.yml
+- group: secrets-base
+- group: variables-base
+- name: ModulePath
+  value: $(System.DefaultWorkingDirectory)/modules/XConfigMaster
 
 jobs:
-- template: /cli/templates/base.yml  # Template reference
-  parameters:
-    jobs:
-      - job: buildPowershell
-        variables:
-          - name: PackageName
-            value: XConfigMaster
-          - name: Packages.Path
-            value: $(Yaml.FolderPath)/$(PackageName).psd1
-          - name: Packages.MaxVersion
-            value: $[ outputs['fetchPackageVersions.MaxVersion'] ]
-          - name: Packages.NewVersion
-            value: $[ outputs['fetchPackageVersions.NewVersion'] ]
-        steps:
-          - powershell: |
-              $packageName = "XConfigMaster"
-              $minVersion = "$(Packages.MajorVersion).$(Packages.MinorVersion).0"
-              Write-Output "Package Name - `"$($packageName)`""
-              Write-Output "Min Version - `"$($minVersion)`""
-              Write-Output "Finding package..."
-              $cmd = "(Find-Package $packageName -MinimumVersion $minVersion -ErrorAction SilentlyContinue).Version"
-              Write-Output "Cmd - `"$cmd`""
-              $maxVersion = Invoke-Expression $cmd
-              
-              if(-not $maxVersion) { 
-                Write-Output "No Package Found..."
-                $maxVersion = $minVersion 
-              }
-
-              Write-Output "Max Version - `"$($maxVersion)`""
-
-              $regex = [regex]::new('^(\d+)\.(\d+)\.(\d+)$')
-              [int] $lowerVersion = $regex.Replace($maxVersion, '$3')
-              $newVersion = $regex.Replace($maxVersion, '$1.$2.'+($lowerVersion+1))
-              Write-Output "New Version - `"$($newVersion)`"" 
-              Write-Output "##vso[task.setvariable variable=MaxVersion;isOutput=true]$($maxVersion)"
-              Write-Output "##vso[task.setvariable variable=NewVersion;isOutput=true]$($newVersion)"
-            name: fetchPackageVersions
-            displayName: Export Yaml Folder Path
-          - powershell: |
-              Publish-Module -Path "$(Packages.Path)" -Version $(Packages.NewVersion)
-            name: publishModule
-            displayName: Publishing Module 
+  - job: publish
+    steps:
+      - task: qetza.replacetokens.replacetokens-task.replacetokens@3
+        name: tokenizeModuleDefinition
+        displayName: Tokenize Module
+        inputs:
+          targetFiles: XConfigMaster.psd1
+          tokenPrefix: '$('
+          tokenSuffix: ')'
+          actionOnMissing: fail
+          verbosity: detailed
+          rootDirectory: $(ModulePath)
+      - powershell: Publish-Module -NuGetApiKey "$(NuGetApiKey)" -Repository PSGallery -Path $(ModulePath) -Force -Verbose
+        name: publishModule
+        displayName: Publishing Module 
           
           
     
