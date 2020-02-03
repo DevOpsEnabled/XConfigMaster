@@ -8,12 +8,12 @@ trigger:
   paths:
     include:
     - modules/XConfigMaster
-    
+pr: none 
 
 variables:
 - template: xpipeline-template-variables.yml
 
-jobs:
+jobs: 
   - template: xpipeline-template-base.yml
           
           
