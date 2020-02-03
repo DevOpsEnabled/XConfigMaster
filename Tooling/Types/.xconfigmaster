@@ -1,0 +1,114 @@
+<?xml version="1.0"?>
+<XConfigMaster>
+	<!-- ********************************************************************** -->
+	<!-- *                             I N I T                                * -->
+	<!-- ______________________________________________________________________ -->
+	<!-- * Usage: 1st to be loaded. Should be mostly used for defining        * -->
+	<!-- *        ActionTypes, XConfigmasterExtensionTypes, ParameterTypes,and* -->
+	<!-- *        InputTypes                                                  * -->
+	<!-- ********************************************************************** -->
+	<XConfigMaster.Init>
+		<Parameter Name="NugetExePath">
+			<InputStrategy Type="OutputVariable" VariableName="NugetExePath" />
+		</Parameter>
+		<PipelineVariable Name="MSIEnableAADGroupApproach" DefaultValue="true" />
+		<Parameters>
+			<Parameter Name="Mode" Type="String">
+				<InputStrategy Priority="0" Type="ScriptParameter" ParamName="Mode" />
+				<InputStrategy Priority="1" Type="DefaultValue" DefaultValue="Mocked" />
+			</Parameter>
+		</Parameters>
+		<ActionTypes>
+			<ActionType Name="ActionGroup" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\ActionGroup.ps1" />
+			<ActionType Name="Print" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\Print.ps1">
+				<Parameter Name="Content" Value="$(Content)" />
+			</ActionType>
+			<ActionType Name="Component" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\Component.ps1" />
+			<ActionType Name="Script" SourceFile="$(ThisFolder)\Live\ActionTypes\Script.ps1" />
+			<ActionType Name="AzureRMDeployment" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\AzureRMDeployment.ps1">
+				<Parameter Name="OverrideParametersScript" Value="$(ThisFolder)\$(Mode)\ActionTypes\AzureRMDeployment_OverrideParameters.ps1" />
+			</ActionType>
+			<ActionType Name="VersionArmTemplate" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\VersionArmTemplate.ps1" />
+			<ActionType Name="Msbuild" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\Msbuild.ps1" />
+			<ActionType Name="VisualStudioBuild" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\VisualStudioBuild.ps1" />
+			<ActionType Name="PublishArtifacts" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\PublishArtifact.ps1" />
+			<ActionType Name="CopyFiles" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\CopyFiles.ps1" />
+			<ActionType Name="AzureAppServiceDeploy" SourceFile="$(ThisFolder)\Live\ActionTypes\AzureAppServiceDeploy.ps1" />
+			<ActionType Name="AzureKeyVault" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\AzureKeyVault.ps1" />
+			<ActionType Name="AppendNsgRule" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\AppendNsgRule.ps1" />
+			<ActionType Name="InteractiveMode" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\InteractiveMode.ps1" />
+			<ActionType Name="UseNuget" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\UseNuget.ps1" />
+			<ActionType Name="Nuget" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\Nuget.ps1" />
+			<ActionType Name="PublishTestResults" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\PublishTestResults.ps1" />
+			<ActionType Name="VisualStudioTest" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\VisualStudioTest.ps1" />
+			<ActionType Name="ConfigureAppService" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\ConfigureAppService.ps1">
+				<Parameter Name="AppServiceName" DefaultValue="$(AppServiceName)" />
+				<Parameter Name="AppendAppSettings" DefaultValue="True" />
+			</ActionType>
+			<ActionType Name="CheckResource" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\CheckResource.ps1" />
+			<ActionType Name="ImportRef" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\ImportRef.ps1" />
+			<ActionType Name="GiveKeyVaultAccess" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\GiveKeyVaultAccess.ps1" />
+			<ActionType Name="ParameterizeFolder" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\ParameterizeFolder.ps1" />
+			<ActionType Name="ParameterizeFile" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\ParameterizeFile.ps1" />
+			<ActionType Name="UndoParameterizeFolder" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\UndoParameterizeFolder.ps1" />
+			<ActionType Name="UndoParameterizeFile" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\UndoParameterizeFile.ps1" />
+			<ActionType Name="ValidationGroup" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\ValidationGroup.ps1" />
+			<ActionType Name="WebConfigUpdate" SourceFile="$(ThisFolder)\$(Mode)\ActionTypes\WebConfigUpdate.ps1" />
+			
+			<ActionType Name="ScopePlugin">
+				<ScriptBlock>
+				return @{
+					Clean = 
+					{
+						Param([ConfigAutomationContext] $context,[UIAction] $action)
+						return $true
+					};
+					Action = 
+					{
+						Param([ConfigAutomationContext] $context,[UIAction] $action)
+						$context.OverrideScope($action)
+						return $true
+					};
+					CanExecute = 
+					{
+						Param([ConfigAutomationContext] $context,[UIAction] $action)
+						return $true
+					};
+					Validate = 
+					{
+						Param([ConfigAutomationContext] $context,[UIAction] $action)
+						return $true
+					};
+					
+				}
+			</ScriptBlock>
+			</ActionType>
+		</ActionTypes>
+	</XConfigMaster.Init>
+	<!-- ********************************************************************** -->
+	<!-- *                          P R E    L O A D                          * -->
+	<!-- ______________________________________________________________________ -->
+	<!-- * Usage: 2nd to be loaded. Should be mostly used for defining        * -->
+	<!-- *        Actions, Templates that are "Ref" elements (Elements with   * -->
+	<!-- *        both "Name"* and "Ref")                                     * -->
+	<!-- ********************************************************************** -->
+	<XConfigMaster.PreLoad>
+	</XConfigMaster.PreLoad>
+	<!-- ********************************************************************** -->
+	<!-- *                              L O A D                               * -->
+	<!-- ______________________________________________________________________ -->
+	<!-- * Usage: 3nd to be loaded. Should be mostly used for defining the    * -->
+	<!-- *        main logic, Meaning should only contain Referenced elements * -->
+	<!--          (Elements with only "Ref" attribute)                        * -->
+	<!-- ********************************************************************** -->
+	<XConfigMaster.Load>
+	</XConfigMaster.Load>
+	<!-- ********************************************************************** -->
+	<!-- *                          P O S T   L O A D                         * -->
+	<!-- ______________________________________________________________________ -->
+	<!-- * Usage: 4nd to be loaded. Should be mostly used for defining any    * -->
+	<!--          ImportTemplate logic to consume any defined work in step #3 * -->
+	<!-- ********************************************************************** -->
+	<XConfigMaster.PostLoad>
+	</XConfigMaster.PostLoad>
+</XConfigMaster>

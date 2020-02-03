@@ -1,0 +1,1043 @@
+<?xml version="1.0"?>
+<XConfigMaster>
+	<!-- ********************************************************************** -->
+	<!-- *                             I N I T                                * -->
+	<!-- ______________________________________________________________________ -->
+	<!-- * Usage: 1st to be loaded. Should be mostly used for defining        * -->
+	<!-- *        ActionTypes, XConfigmasterExtensionTypes, ParameterTypes,and* -->
+	<!-- *        InputTypes                                                  * -->
+	<!-- ********************************************************************** -->
+	<XConfigMaster.Init>
+
+		<ParameterTypes>
+	    <ParameterType Name="Boolean">
+			return @{
+				Validate = 
+				{
+					Param([ConfigAutomationContext] $context, [object]$name)
+					
+					return $true
+				};
+				TransformInput = 
+				{
+					Param([ConfigAutomationContext] $context, [string]$name)
+					if($name -ieq "True" -or $name -ieq "`$true"){
+						return $true
+					}
+					return $false
+				};
+				TransformParameterType = 
+				{
+					Param([ConfigAutomationContext] $context)
+					return [bool]
+				};
+				TransformParameterUse = 
+				{
+					Param([ConfigAutomationContext] $context, [string]$inputObj)
+					if($inputObj -ieq "True" -or $inputObj -ieq "`$true"){
+						return $true
+					}
+					return $false
+				};
+				GenerateDynamicParameters = 
+				{
+					Param([ConfigAutomationContext] $context, [System.Management.Automation.RuntimeDefinedParameterDictionary]$dynamicParameters, [UIParameter] $parameter, [UIInputCollection] $inputs)
+					
+					
+					
+					
+					return $dynamicParameters
+				};
+			}
+		</ParameterType>
+			<ParameterType Name="Integer">
+				return @{
+					Validate = 
+					{
+						Param([ConfigAutomationContext] $context, [object]$content)
+						if(-not ($content -is [String])){
+								$context.Error("'{white}$content{gray}' is of type {white}$($content.GetType().Name){gray}, expected {white}string{gray}")
+						}
+						if(-not ($content -match '^\d+$')){
+								$context.Error("'{white}$content{gray}' has non-digit characters which fails to parse as an {white}integer{gray}")
+						}
+						
+						return $true
+					};
+					TransformInput = 
+					{
+						Param([ConfigAutomationContext] $context, [string]$content)
+						return [Int32]::Parse($content)
+					};
+					TransformParameterType = 
+					{
+						Param([ConfigAutomationContext] $context)
+						return [int]
+					};
+					TransformParameterUse = 
+					{
+						Param([ConfigAutomationContext] $context, [string]$inputObj)
+						if($inputObj -eq $false){
+							return "[NOT SET]"
+						}
+						return ConvertTo-SecureString $inputObj -AsPlainText -Force
+					};
+					GenerateDynamicParameters = 
+					{
+						Param([ConfigAutomationContext] $context, [System.Management.Automation.RuntimeDefinedParameterDictionary]$dynamicParameters, [UIParameter] $parameter, [UIInputCollection] $inputs)
+						
+						
+						
+						$dynamicParAttrs = New-Object  System.Collections.ObjectModel.Collection[System.Attribute]
+						
+						
+						$parameterName   = $parameter.ParameterName()
+						
+						$parameterType   = $parameter.ParameterType().Definition().TransformParameterToCodeType($inputs)
+						$input           = $context.Inputs().Get($parameter.ParameterName())
+
+						$parentScope  = $parameter.CurrentScope().ParentScope()
+						$currentScope = $parameter.CurrentScope()
+						if($parentScope){
+						
+							if($parentScope.Parameters().Get($parameter.ParameterName(), $true)){
+								$prefixScopeName = $parameter.GetAllParents() | ForEach {$_.Name()} -join "."
+								$parameterName = "$($prefixScopeName):$($parameterName)"
+							}
+						}
+						$GenericAttr  = New-Object System.Management.Automation.ParameterAttribute
+						$GenericAttr.ParameterSetName  = "__AllParameterSets"   	 
+						$dynamicParAttrs.Add($GenericAttr)
+
+						$RuntimeParam  = New-Object System.Management.Automation.RuntimeDefinedParameter($parameterName,  $parameterType, $dynamicParAttrs)
+						if(-not $dynamicParameters.ContainsKey($parameterName)){
+							$dynamicParameters.Add($parameterName,  $RuntimeParam)
+						}
+						
+						return $dynamicParameters
+					};
+				}
+			</ParameterType>
+			<ParameterType Name="SecureString">
+				return @{
+					Validate = 
+					{
+						Param([ConfigAutomationContext] $context, [object]$name)
+						
+						return $true
+					};
+					TransformInput = 
+					{
+						Param([ConfigAutomationContext] $context, [string]$name)
+						return ConvertTo-SecureString $name -AsPlainText -Force
+					};
+					TransformParameterType = 
+					{
+						Param([ConfigAutomationContext] $context)
+						return [SecureString]
+					};
+					TransformParameterUse = 
+					{
+						Param([ConfigAutomationContext] $context, [string]$inputObj)
+						if($inputObj -eq $false){
+							return "[NOT SET]"
+						}
+						return ConvertTo-SecureString $inputObj -AsPlainText -Force
+					};
+					GenerateDynamicParameters = 
+					{
+						Param([ConfigAutomationContext] $context, [System.Management.Automation.RuntimeDefinedParameterDictionary]$dynamicParameters, [UIParameter] $parameter, [UIInputCollection] $inputs)
+						
+						
+						
+						$dynamicParAttrs = New-Object  System.Collections.ObjectModel.Collection[System.Attribute]
+						
+						
+						$parameterName   = $parameter.ParameterName()
+						
+						$parameterType   = $parameter.ParameterType().Definition().TransformParameterToCodeType($inputs)
+						$input           = $context.Inputs().Get($parameter.ParameterName())
+
+						$parentScope  = $parameter.CurrentScope().ParentScope()
+						$currentScope = $parameter.CurrentScope()
+						if($parentScope){
+						
+							if($parentScope.Parameters().Get($parameter.ParameterName(), $true)){
+								$prefixScopeName = $parameter.GetAllParents() | ForEach {$_.Name()} -join "."
+								$parameterName = "$($prefixScopeName):$($parameterName)"
+							}
+						}
+						$GenericAttr  = New-Object System.Management.Automation.ParameterAttribute
+						$GenericAttr.ParameterSetName  = "__AllParameterSets"   	 
+						$dynamicParAttrs.Add($GenericAttr)
+
+						$RuntimeParam  = New-Object System.Management.Automation.RuntimeDefinedParameter($parameterName,  $parameterType, $dynamicParAttrs)
+						if(-not $dynamicParameters.ContainsKey($parameterName)){
+							$dynamicParameters.Add($parameterName,  $RuntimeParam)
+						}
+						
+						return $dynamicParameters
+					};
+				}
+			</ParameterType>
+			<ParameterType Name="String">
+			return @{
+				Validate = 
+				{
+					Param([ConfigAutomationContext] $context, [object]$name)
+					
+					return $true
+				};
+				TransformInput = 
+				{
+					Param([ConfigAutomationContext] $context, [string]$name)
+					return $name
+				};
+				TransformParameterType = 
+				{
+					Param([ConfigAutomationContext] $context)
+					return [string]
+				};
+				TransformParameterUse = 
+				{
+					Param([ConfigAutomationContext] $context, [string]$inputObj)
+					if($inputObj -eq $false){
+						return "[NOT SET]"
+					}
+					return $inputObj
+				};
+				GenerateDynamicParameters = 
+				{
+					Param([ConfigAutomationContext] $context, [System.Management.Automation.RuntimeDefinedParameterDictionary]$dynamicParameters, [UIParameter] $parameter, [UIInputCollection] $inputs)
+					
+					
+					
+					$dynamicParAttrs = New-Object  System.Collections.ObjectModel.Collection[System.Attribute]
+					
+					
+					$parameterName   = $parameter.ParameterName()
+					
+					$parameterType   = $parameter.ParameterType().Definition().TransformParameterToCodeType($inputs)
+					$input           = $context.Inputs().Get($parameter.ParameterName())
+
+					$parentScope  = $parameter.CurrentScope().ParentScope()
+					$currentScope = $parameter.CurrentScope()
+					if($parentScope){
+					
+						if($parentScope.Parameters().Get($parameter.ParameterName(), $true)){
+							$prefixScopeName = $parameter.GetAllParents() | ForEach {$_.Name()} -join "."
+							$parameterName = "$($prefixScopeName):$($parameterName)"
+						}
+					}
+					$GenericAttr  = New-Object System.Management.Automation.ParameterAttribute
+					$GenericAttr.ParameterSetName  = "__AllParameterSets"   	 
+					$dynamicParAttrs.Add($GenericAttr)
+
+					$RuntimeParam  = New-Object System.Management.Automation.RuntimeDefinedParameter($parameterName,  $parameterType, $dynamicParAttrs)
+					if(-not $dynamicParameters.ContainsKey($parameterName)){
+						$dynamicParameters.Add($parameterName,  $RuntimeParam)
+					}
+					
+					return $dynamicParameters
+				};
+			}
+		</ParameterType>
+			<ParameterType Name="AppRegistrationByName">
+			return @{
+				Validate = 
+				{
+					Param([ConfigAutomationContext] $context, [object]$name, [UIParameter] $parameter)
+					
+					if($parameter._properties.ContainsKey("LoadedAppRegistration")){
+						if($parameter._properties["LoadedAppRegistration"] -and $parameter._properties["LoadedAppRegistration"].Name -ieq $name){
+							return $true
+						}
+					}
+					try{
+						$appRegistration = Get-AzureADApplication -Filter "DisplayName eq '$($name)'"
+						if(-not $resource){
+							$context.Error("App Registration $($name) was not found")
+							return $false
+						}
+					}
+					catch{
+						$context.Error("App Registration $($name) was unable to be fetched: {red}$($_.Exception.Message)")
+						return $false
+					}
+					return $true
+				};
+				TransformInput = 
+				{
+					Param([ConfigAutomationContext] $context, [string]$name, [UIParameter] $parameter)
+					
+					if($parameter._properties.ContainsKey("LoadedAppRegistration")){
+						if($parameter._properties["LoadedAppRegistration"] -and $parameter._properties["LoadedAppRegistration"].Name -ieq $name){
+							return $true
+						}
+						
+					}
+					
+					$appRegistration = Get-AzureADApplication -Filter "DisplayName eq '$($name)'"
+					$parameter._properties["LoadedAppRegistration"] = $appRegistration
+					return $appRegistration
+				};
+				TransformParameterType = 
+				{
+					Param([ConfigAutomationContext] $context)
+					return [object]
+				};
+				TransformParameterUse = 
+				{
+					Param([ConfigAutomationContext] $context, [string]$inputObj)
+					
+					return $inputObj
+				};
+				GenerateDynamicParameters = 
+				{
+					Param([ConfigAutomationContext] $context, [System.Management.Automation.RuntimeDefinedParameterDictionary]$dynamicParameters, [UIParameter] $parameter, [UIInputCollection] $inputs)
+					
+					
+					return $dynamicParameters
+				};
+			}
+			</ParameterType>
+			<ParameterType Name="AppService">
+			return @{
+				Validate = 
+				{
+					Param([ConfigAutomationContext] $context, [object]$name, [UIParameter] $parameter)
+					
+					if($parameter._properties.ContainsKey("LoadedResource")){
+						if($parameter._properties["LoadedResource"] -and $parameter._properties["LoadedResource"].Name -ieq $name){
+							return $true
+						}
+						
+					}
+					try{
+						$resource = $context.AzureRmResources($name, $null, $null) | Where {$_.ResourceType -eq 'Microsoft.web/sites'}
+						if(-not $resource){
+							$context.Error("Resource $($name) was not found")
+							return $false
+						}
+					}
+					catch{
+						$context.Error("Resource $($name) was unable to be fetched: {red}$($_.Exception.Message)")
+						return $false
+					}
+					return $true
+				};
+				TransformInput = 
+				{
+					Param([ConfigAutomationContext] $context, [string]$name, [UIParameter] $parameter)
+					
+					if($parameter._properties.ContainsKey("LoadedResource")){
+						if($parameter._properties["LoadedResource"].Name -ieq $name){
+							return $parameter._properties["LoadedResource"]
+						}
+						
+					}
+					
+					$resource = $context.AzureRmResources($name, $null, $null) | Where {$_.ResourceType -eq 'Microsoft.web/sites'}
+					$parameter._properties["LoadedResource"] = $resource
+					return $resource
+				};
+				TransformParameterType = 
+				{
+					Param([ConfigAutomationContext] $context)
+					return [object]
+				};
+				TransformParameterUse = 
+				{
+					Param([ConfigAutomationContext] $context, [string]$inputObj)
+					
+					return $inputObj
+				};
+				GenerateDynamicParameters = 
+				{
+					Param([ConfigAutomationContext] $context, [System.Management.Automation.RuntimeDefinedParameterDictionary]$dynamicParameters, [UIParameter] $parameter, [UIInputCollection] $inputs)
+					
+					
+					return $dynamicParameters
+				};
+			}
+		</ParameterType>
+			<ParameterType Name="Resource">
+			return @{
+				Validate = 
+				{
+					Param([ConfigAutomationContext] $context, [object]$name, [UIParameter] $parameter)
+					
+					try{
+						$resource = $context.AzureRmResources($name, $null, $null)
+						if(-not $resource){
+							$context.Error("Resource $($name) was not found")
+							return $false
+						}
+					}
+					catch{
+						$context.Error("Resource $($name) was unable to be fetched: {red}$($_.Exception.Message)")
+						return $false
+					}
+					return $true
+				};
+				TransformInput = 
+				{
+					Param([ConfigAutomationContext] $context, [string]$name, [UIParameter] $parameter)
+					
+					
+					$resource = $context.AzureRmResources($name, $null, $null)
+					return $resource
+				};
+				TransformParameterType = 
+				{
+					Param([ConfigAutomationContext] $context)
+					return [object]
+				};
+				TransformParameterUse = 
+				{
+					Param([ConfigAutomationContext] $context, [string]$inputObj)
+					
+					return $inputObj
+				};
+				GenerateDynamicParameters = 
+				{
+					Param([ConfigAutomationContext] $context, [System.Management.Automation.RuntimeDefinedParameterDictionary]$dynamicParameters, [UIParameter] $parameter, [UIInputCollection] $inputs)
+					
+					
+					return $dynamicParameters
+				};
+			}
+		</ParameterType>
+		</ParameterTypes>
+<InputTypes>
+			<InputType Name="OutputVariable">
+			return @{
+				Clean = 
+				{
+					Param([ConfigAutomationContext] $context,[UIInputStrategy] $inputStrategy)
+					$context.Action("Parameters", "Clearing Output Variable '{white}$($inputStrategy.OutputVariableName){gray}'")
+					$currentScope = $inputStrategy.CurrentScope()
+					if($currentScope.OutputVariables.ContainsKey($inputStrategy.OutputVariableName)){
+						$currentScope.OutputVariables.Remove($inputStrategy.OutputVariableName)
+					}
+					return $true
+				};
+				InputValue = 
+				{
+					Param([ConfigAutomationContext] $context,[UIInputStrategy] $inputStrategy)
+					if(-not $inputStrategy.CurrentScope().ExpectedOutputVariables.ContainsKey($inputStrategy.OutputVariableName)){
+						return $null
+					}
+					return $inputStrategy.CurrentScope().OutputVariables[$inputStrategy.OutputVariableName]
+				};
+				InputMetadata = 
+				{
+					Param([ConfigAutomationContext] $context,[UIInputStrategy] $inputStrategy, [System.Xml.XmlElement] $element)
+					$variableName = $element.GetAttribute("VariableName")
+						
+					if(-not ($variableName) ){
+						throw "Not all the attributes to build the input strategy '$($inputStrategy.Name())' of type 'VariableName', element were found:`r`n  VariableName:$($element.GetAttribute("VariableName"))`r`n )"
+					}
+					
+					$currentScope = $inputStrategy.CurrentScope()
+					[Helper]::SetPropertyIfNotExists($currentScope, "hashtable", "OutputVariables", [hashtable]::new())
+					[Helper]::SetPropertyIfNotExists($currentScope, "hashtable", "ExpectedOutputVariables", [hashtable]::new())
+					[Helper]::SetProperty($inputStrategy, "String", "OutputVariableName", $variableName)
+
+
+					$currentScope.ExpectedOutputVariables[$variableName] = $true
+
+					$inputStrategy | Add-Member -MemberType ScriptMethod -Name "ToString" -Value {
+						return "Out {white}$($this.OutputVariableName){gray}`r`n"
+					} -Force
+					$inputStrategy | Add-Member -MemberType ScriptMethod -Name "Shorthand" -Value {
+						return "$($this.OutputVariableName)"
+					} -Force
+
+					if(-not ($context.psobject.methods | Foreach {$_.Name} | Where {$_ -eq "InjectOutputVariable"})){
+						$context | Add-Member -MemberType ScriptMethod -Name "InjectOutputVariable" -Value {
+							Param([UIAction] $action, [string] $varName, [string] $varValue)
+
+							$parents = $action.GetAllParents($true)
+							$context = $action.Context()
+
+							$context.Display("{white}[{magneta}$($varName){white}]{gray} - $($varValue)")
+
+							# $foundScope = $null
+							$scopeResults = @()
+							foreach($parent in $parents){
+
+								if(-not [Helper]::HasProperty($parent, "OutputVariables")){
+									# $context.Display("{red}No Output Variables{white} are xpected")
+									# $scopeResults += (new-object psobject -Property @{Status = "{red}No Output Variables{white} are xpected"; Scope = $parent})
+									continue
+								}
+
+								if(-not $parent.ExpectedOutputVariables.ContainsKey($varName)){	
+									# $context.Display("{red}No Output Variable $($varName){gray} were expected")
+									# $scopeResults += (new-object psobject -Property @{Status = "{red}No Output Variable $($varName){gray} were expected"; Scope = $parent})
+									continue
+								}
+											
+								if($parent.OutputVariables[$varName]){
+									$oldValue = $parent.OutputVariables[$varName]
+									$newValue = $varValue
+									# $context.Display("{yellow}Overwriting{white} Output Variable $($varName){gray} old {white}$($oldValue){gray}, new {white}$($newValue){gray}")
+									$scopeResults += (new-object psobject -Property @{Status = "{yellow}Overwriting{white}Output Variable $($varName){gray} old {white}$($oldValue){gray}, new {white}$($newValue){gray}"; Scope = $parent})
+									$parent.OutputVariables[$varName] = $varValue
+									continue
+								}
+
+								if($parent.OutputVariables[$varName] -eq $false){
+									$oldValue = $parent.OutputVariables[$varName]
+									$newValue = $varValue
+									# $context.Display("{green}Overwriting Valid{white} Output Variable $($varName){gray} old {white}$($oldValue){gray}, new {white}$($newValue){gray}")
+									$scopeResults += (new-object psobject -Property @{Status = "{green}Overwriting Valid{white}Output Variable $($varName){gray} old {white}$($oldValue){gray}, new {white}$($newValue){gray}"; Scope = $parent})
+									$parent.OutputVariables[$varName] = $varValue
+									continue
+								}
+
+								$scopeResults += (new-object psobject -Property @{Status = "{green}New Output Variable{white} $($varName){gray} added as {white}$($varValue){gray}"; Scope = $parent})
+								# $context.Display("{green}New Output Variable{white} $($varName){gray} added as {white}$($varValue){gray}")
+								$parent.OutputVariables[$varName] = $varValue
+							}
+							foreach($result in $scopeResults){
+								$context.PushIndent()
+								$context.Display("{white}[{magenta}$($result.Scope.Name()){white}]{gray} - $($result.Status)")
+							}
+
+							foreach($result in $scopeResults){
+								$context.PopIndent()
+							}
+						}
+					}
+									
+					return $name
+				};
+			}
+		</InputType>
+			<InputType Name="DefaultValue">
+			return @{
+				Clean = 
+				{
+					Param([ConfigAutomationContext] $context,[UIInputStrategy] $inputStrategy)
+					
+					return $true
+				};
+				InputValue = 
+				{
+					Param([ConfigAutomationContext] $context,[UIInputStrategy] $inputStrategy)
+					return $inputStrategy.DefaultValue
+				};
+				InputMetadata = 
+				{
+					Param([ConfigAutomationContext] $context,[UIInputStrategy] $inputStrategy, [System.Xml.XmlElement] $element)
+					$defaultValue = $element.InnerText
+					
+					if(-not $defaultValue){
+						$defaultValue = $element.GetAttribute("DefaultValue")
+					}
+					if(-not ($defaultValue) ){
+						throw "Not all the attributes to build the input strategy '$($inputStrategy.Name())' of type 'DefaultValue', element were found:`r`n  DefaultValue:$($element.GetAttribute("DefaultValue"))`r`n )"
+					}
+
+					$defaultValue = $defaultValue.Trim()
+					$inputStrategy | Add-Member -MemberType NoteProperty -Name "DefaultValue" -Value $($defaultValue) -TypeName String -Force
+
+					$inputStrategy | Add-Member -MemberType ScriptMethod -Name "ToString" -Value {
+						return "Default {white}$($this.DefaultValue){gray}`r`n"
+					} -Force
+					$inputStrategy | Add-Member -MemberType ScriptMethod -Name "Shorthand" -Value {
+						return "$($this.DefaultValue)"
+					} -Force
+					return $name
+				};
+			}
+		</InputType>
+			<InputType Name="KeyVaultSecret">
+			return @{
+				Clean = 
+				{
+					Param([ConfigAutomationContext] $context,[UIInputStrategy] $inputStrategy)
+					
+					return $true
+				};
+				InputValue = 
+				{
+					Param([ConfigAutomationContext] $context,[UIInputStrategy] $inputStrategy, [object] $arguments)
+					
+					$keyVaultName = $inputStrategy.KeyVaultName()
+					$secretName   = $inputStrategy.SecretName()
+					
+					
+					# $context.Display("Fetching Secret {magenta}$($inputStrategy.Shorthand()){gray}")
+					$secretvalueFromKeyVault = $null
+					try{
+						$secretvalueFromKeyVault = Get-AzureKeyVaultSecret -VaultName $keyVaultName -Name $secretName
+					}
+					catch{
+						$context.Error("Fetching from Secret {magenta}$($inputStrategy.Shorthand()){gray} {red}failed{gray}`r`n{white}Message:{gray}`r`n$($_.Exception.Message)`r`n{white}Stack Trace:{gray}`r`n$($_.ScriptStackTrace)")
+						$secretvalueFromKeyVault = $null
+					}
+					if($secretvalueFromKeyVault){
+						
+						$context.Display("{magenta}$($inputStrategy.Shorthand()){gray} - {green}Found{gray}")
+						if($secretvalueFromKeyVault -and -not $inputStrategy._skipCachingValue){
+							$inputStrategy.SetCacheValue($secretvalueFromKeyVault.SecretValueText)
+						}
+						return $secretvalueFromKeyVault.SecretValueText
+					}
+					else{
+						$context.Display("{magenta}$($inputStrategy.Shorthand()){gray} - {red}Not Found{gray}")
+						return $null
+					}
+					
+				};
+				InputMetadata = 
+				{
+					Param([ConfigAutomationContext] $context, [UIInputStrategy] $inputStrategy, [System.Xml.XmlElement] $element)
+					
+					if(-not ($element.GetAttribute("KeyVaultName") -or -not ($element.GetAttribute("SecretName")))){
+						throw "Not all the attributes to build the input strategy '$($inputStrategy.Name())' of type 'ParamName', element were found:`r`n  KeyVault:$($element.GetAttribute("KeyVault"))`r`n  SecretName:$($element.GetAttribute("SecretName")) )"
+					}
+					
+					$keyVaultName 			 = $($element.GetAttribute("KeyVaultName").ToString())
+					$secretName			     = $($element.GetAttribute("SecretName").ToString())
+					$skipCachingValue        = $($element.GetAttribute("SkipCachingValue"))
+					
+					$inputStrategy | Add-Member -MemberType NoteProperty -Name "_keyVaultName" -Value $keyVaultName -TypeName String -Force
+					$inputStrategy | Add-Member -MemberType NoteProperty -Name "_secretName" -Value $secretName -TypeName String -Force
+					$inputStrategy | Add-Member -MemberType NoteProperty -Name "_skipCachingValue" -Value $false -TypeName bool -Force
+					
+					if($skipCachingValue -and $skipCachingValue.ToString() -ieq "true"){
+						$inputStrategy._skipCachingValue = $true
+					}
+					
+					$inputStrategy | Add-Member -MemberType ScriptMethod -Name "KeyVaultName" -Value {
+						# $original = $this.Context()._parameterizing
+						# $this.Context()._parameterizing = $false
+						$value = $this.ParameterizeString($this._keyVaultName)
+						# $this.Context()._parameterizing = $original
+						return $value
+					} -Force
+					$inputStrategy | Add-Member -MemberType ScriptMethod -Name "SecretName" -Value {
+						# $original = $this.Context()._parameterizing
+						# $this.Context()._parameterizing = $false
+						$value = $this.ParameterizeString($this._secretName)
+						# $this.Context()._parameterizing = $original
+						return $value
+					} -Force
+					
+					$inputStrategy | Add-Member -MemberType ScriptMethod -Name "ToString" -Value {
+						return "Key Vault Secret {white}$($this.KeyVaultName()){gray}/{white}$this.SecretName()){gray}"
+					} -Force
+					$inputStrategy | Add-Member -MemberType ScriptMethod -Name "Shorthand" -Value {
+						return "Key Vault($($this.KeyVaultName())) Secret($($this.SecretName()))"
+					} -Force
+					return $name
+				};
+			}
+		</InputType>
+			<InputType Name="ScriptParameter">
+			return @{
+				Clean = 
+				{
+					Param([ConfigAutomationContext] $context,[UIInputStrategy] $inputStrategy)
+					
+					return $true
+				};
+				InputValue = 
+				{
+					Param([ConfigAutomationContext] $context,[UIInputStrategy] $inputStrategy, [object] $arguments)
+					
+					if(-not $context.ParameterArguments()){
+						return $null
+					}
+					
+					$args =  $context.ParameterArguments()
+					$value = $args[$inputStrategy.ParamName]
+					# Write-Host "Getting Script Parameter '$($inputStrategy.ParamName)' which is found to be '$($value)'"
+					
+					return $value
+				};
+				InputMetadata = 
+				{
+					Param([ConfigAutomationContext] $context, [UIInputStrategy] $inputStrategy, [System.Xml.XmlElement] $element)
+					
+					if(-not ($element.GetAttribute("ParamName") )){
+						throw "Not all the attributes to build the input strategy '$($inputStrategy.Name())' of type 'ParamName', element were found:`r`n  ParamName:$($element.GetAttribute("ParamName"))`r`n )"
+					}
+					
+					$value = $($element.GetAttribute("ParamName").ToString())
+					
+					$parameterName   = $value
+					$parameterType   = "String"
+					
+					# $context.GetExpectedParameters().Add($parameterName, $parameterType)
+					# Write-Host "Updating Update to add 'ParamName' as '$($value)'"
+					$inputStrategy | Add-Member -MemberType NoteProperty -Name "ParamName" -Value $value -TypeName String -Force
+
+					$inputStrategy | Add-Member -MemberType ScriptMethod -Name "ToString" -Value {
+						return "Parameter {white}$($this.ParamName){gray} | {magenta}Example {gray}-$($this.ParamName) '$($this.ParamName)'"
+					} -Force
+					$inputStrategy | Add-Member -MemberType ScriptMethod -Name "Shorthand" -Value {
+						return "-$($this.ParamName)"
+					} -Force
+					return $name
+				};
+			}
+		</InputType>
+			<InputType Name="EnvironmentVariable">
+			return @{
+				Clean = 
+				{
+					Param([ConfigAutomationContext] $context,[UIInputStrategy] $inputStrategy)
+					
+					return $true
+				};
+				InputValue = 
+				{
+					Param([ConfigAutomationContext] $context,[UIInputStrategy] $inputStrategy)
+					$value = [Environment]::GetEnvironmentVariable($inputStrategy.EnvName)
+					# Write-Host "Getting Script Parameter '$($inputStrategy.EnvName)' which is found to be '$($value)'"
+					return $value
+				};
+				InputMetadata = 
+				{
+					Param([ConfigAutomationContext] $context,[UIInputStrategy] $inputStrategy, [System.Xml.XmlElement] $element)
+					if(-not ($element.GetAttribute("EnvName") )){
+						throw "Not all the attributes to build the input strategy '$($inputStrategy.Name())' of type 'EnvName', element were found:`r`n  EnvName:$($element.GetAttribute("EnvName"))`r`n )"
+					}
+					$inputStrategy | Add-Member -MemberType NoteProperty -Name "EnvName" -Value $($element.GetAttribute("EnvName").ToString()) -TypeName String -Force
+					
+					$inputStrategy | Add-Member -MemberType ScriptMethod -Name "ToString" -Value {
+						return "Env {white}$($this.EnvName){gray}`r`n"
+					} -Force
+					$inputStrategy | Add-Member -MemberType ScriptMethod -Name "Shorthand" -Value {
+						return "`$env:$($this.EnvName)"
+					} -Force
+					return $name
+				};
+			}
+		</InputType>
+		</InputTypes>
+		<ConfigMasterExtensionTypes>
+			<ConfigMasterExtensionType Name="RawWrappingXml" Disabled="true"><![CDATA[
+			return @{
+				DefineExtension = 
+				{
+					Param([ConfigAutomationContext] $context, [UIConfigMasterExtension] $resource, [System.Xml.XmlElement] $element)
+					$resource | Add-Member -MemberType NoteProperty -Name "WrappingXml" -Value $null -TypeName String -Force
+					$resource | Add-Member -MemberType ScriptMethod -Name "ToString"  -Value {
+						return "$($this.Name()) - `r`n$($this.WrappingXml)"
+					} -Force
+					
+					if(($element.InnerXml )){
+						$resource.WrappingXml = $element.InnerXml
+						return
+					}
+					
+					throw "Not all the attributes to build the resource type element were found:`r`n  Name:$($element.GetAttribute("Name"))`r`n  Content:$($element.InnerXml)`r`n)"
+					
+				};
+				
+				AppyExtension = 
+				{
+					Param([ConfigAutomationContext] $context, [UIConfigMasterExtension] $extensionType, [System.Xml.XmlElement] $element)
+					if($element.GetAttribute("SkipExtensions") -eq "True"){
+						return $element
+					}
+					$element.SetAttribute("SkipExtensions","True")
+					$xmlContent = $element.OuterXml
+					$xmlContent = $extensionType.WrappingXml.Replace('|CONTENT|', $xmlContent)
+					[XML]$xml = "<Root>$($xmlContent)</Root>"
+					return $xml.Root.FirstChild
+				};
+				
+			}
+		]]></ConfigMasterExtensionType>
+			<ConfigMasterExtensionType Name="ReplaceWrapper"><![CDATA[
+			return @{
+				DefineExtension = 
+				{
+					Param([ConfigAutomationContext] $context, [UIConfigMasterExtension] $resource, [System.Xml.XmlElement] $element)
+					$Search      = $element.GetAttribute("Search")
+					$ReplaceWith = $element.GetAttribute("ReplaceWith")
+				
+					
+				};
+				
+				AppyExtension = 
+				{
+					Param([ConfigAutomationContext] $context, [UIConfigMasterExtension] $extensionType, [System.Xml.XmlElement] $main)
+					
+					
+					$elements = @($main.SelectNodes($extensionType.XPath()))
+					$context.Display("Extension {white}Replace{gray}, Number of elements [$($elements.Count)]")
+					foreach($element in $elements){
+						
+						$xmlContent = $element.Body.InnerXml
+						foreach($rule in $element.ReplaceRule){
+							$Search      = $rule.GetAttribute("Search")
+							$ReplaceWith = $rule.GetAttribute("ReplaceWith")
+							$xmlContent = $xmlContent.Replace($Search, $ReplaceWith)
+						}
+						
+						[XML]$xml = "<Root>$($xmlContent)</Root>"
+						
+						
+						foreach($replaceItem in $xml.Root.ChildNodes){
+							if($replaceItem.Name -eq "ConfigAutomation"){
+								foreach($replaceItem in $replaceItem.ChildNodes){
+									$imported = $element.OwnerDocument.ImportNode($replaceItem, $true)
+									$item = $element.ParentNode.AppendChild($imported)
+								}
+								continue
+							}
+							$imported = $element.OwnerDocument.ImportNode($replaceItem, $true)
+							$item = $element.ParentNode.AppendChild($imported)
+						}
+						
+						$item = $element.ParentNode.RemoveChild($element)
+						
+						# $context.Display("Performed Replace:")
+						# $context.Display($main.OuterXml)
+					}
+					
+					
+					return $main
+				};
+				
+			}
+		]]></ConfigMasterExtensionType>
+			<ConfigMasterExtensionType Name="PipelineVariable"><![CDATA[
+			return @{
+				DefineExtension = 
+				{
+					Param([ConfigAutomationContext] $context, [UIConfigMasterExtension] $resource, [System.Xml.XmlElement] $element)
+					
+				
+					
+				};
+				
+				AppyExtension = 
+				{
+					Param([ConfigAutomationContext] $context, [UIConfigMasterExtension] $extensionType, [System.Xml.XmlElement] $mainElement)
+					
+					# $context.Display("{magenta}Pipeline Enter:{gray}`r`n$($mainElement.Outerxml | Format-Xml)`r`n`r`n")
+					$elements = $mainElement.SelectNodes("PipelineVariable[@Name]")
+					foreach($element in $elements){
+						$name = $element.GetAttribute("Name")
+						
+						$paramName = $name -replace "\.","-"
+						$envName   = $name -replace "\.","_"
+						
+						$paramName      = $paramName.ToLower()
+						$envName        = $envName.ToUpper()
+						$defaultValue   = $element.GetAttribute("DefaultValue") | ??: ($element.InnerText)
+						$keyVaultSecret = $element.GetAttribute("KeyVaultSecret")
+						
+						$newElementXmlText = "<Parameter Name=`"$($name)`">"
+						
+						$priority = 1
+						
+						$newElementXmlText += "`r`n   <InputStrategy Priority=`"$($priority)`" Type=`"ScriptParameter`" ParamName=`"$($paramName)`"/>"
+						$priority += 1
+						
+						$newElementXmlText += "`r`n   <InputStrategy Priority=`"$($priority)`" Type=`"EnvironmentVariable`" EnvName=`"$($envName)`"/>"
+						$priority += 1
+						
+						
+						if($keyVaultSecret){
+							if(-not ($keyVaultSecret -match "^([^\\\/]+)[\/\\]([^\\\/]+)$")){
+								throw "Unable to apply config extension on PipelineVariable. KeyVaultSecret must follow the following format 'KeyVault\SecretName' or 'KeyVault/SecretName'"
+								return $null
+							}
+							$keyVaultName       = $Matches[1]
+							$keyVaultSecretName = $Matches[2]
+							$skipCachingValue = $element.GetAttribute("SkipCachingValue")
+							if($skipCachingValue){
+								$newElementXmlText += "`r`n   <InputStrategy Priority=`"$($priority)`" Type=`"KeyVaultSecret`" KeyVaultName=`"$($keyVaultName)`" SecretName=`"$($keyVaultSecretName)`" SkipCachingValue=`"$($skipCachingValue)`"/>"
+							}
+							else{
+								$newElementXmlText += "`r`n   <InputStrategy Priority=`"$($priority)`" Type=`"KeyVaultSecret`" KeyVaultName=`"$($keyVaultName)`" SecretName=`"$($keyVaultSecretName)`"/>"
+							}
+							$priority += 1
+						}
+						if($defaultValue){
+							$newElementXmlText += "`r`n   <InputStrategy Priority=`"$($priority)`" Type=`"DefaultValue`">$($defaultValue)</InputStrategy>"
+							$priority += 1
+						}
+						$newElementXmlText += "`r`n</Parameter>"
+						
+						[XML] $newElementDoc = "<Root>$($newElementXmlText)</Root>"
+						$newElement = $mainElement.OwnerDocument.ImportNode($newElementDoc.FirstChild.Parameter, $true)
+						$newElement = $element.ParentNode.ReplaceChild($newElement, $element)
+						# $context.Display("Replacing PipelineVariable $($newElement.Name)")
+					}
+					# $context.Display("{magenta}Pipeline Exit:{gray}`r`n$($mainElement.Outerxml | Format-Xml)`r`n`r`n")
+					return $mainElement
+				};
+				
+			}
+		]]></ConfigMasterExtensionType>
+			<ConfigMasterExtensionType Name="PipelineVariables"><![CDATA[
+			return @{
+				DefineExtension = 
+				{
+					Param([ConfigAutomationContext] $context, [UIConfigMasterExtension] $resource, [System.Xml.XmlElement] $element)
+					
+				
+					
+				};
+				
+				AppyExtension = 
+				{
+					Param([ConfigAutomationContext] $context, [UIConfigMasterExtension] $extensionType, [System.Xml.XmlElement] $mainElement)
+					
+					# $context.Display("{magenta}Pipelines Enter:{gray}`r`n$($mainElement.Outerxml | Format-Xml)`r`n`r`n")
+					$elements = $mainElement.SelectNodes("./PipelineVariables")
+					foreach($element in $elements){
+					
+						if($element.VariableGroupName){
+							$pipelineVariables = $element.SelectNodes("PipelineVariable[@Name]")
+							foreach($pipelineVariable in $pipelineVariables){
+								$pipelineVariable.SetAttribute("VariableGroupName", $element.VariableGroupName)
+							}
+						}
+						
+						
+						$pipelineVariables = $element.SelectNodes("./PipelineVariable[@Name]")
+						foreach($pipelineVariable in $pipelineVariables){
+						    $context.Display("Moving {magenta}$($pipelineVariable.Name){gray}")
+							$moved = $element.ParentNode.InsertBefore($pipelineVariable, $element)
+						}
+						
+						$removed = $element.ParentNode.RemoveChild($element)
+					}
+					
+					# $context.Display("{magenta}Pipelines Exits:{gray}`r`n$($mainElement.Outerxml | Format-Xml)`r`n`r`n")
+					return $mainElement
+				};
+				
+			}
+		]]></ConfigMasterExtensionType>
+			<ConfigMasterExtensionType Name="LoadVariableGroup"><![CDATA[
+			return @{
+				DefineExtension = 
+				{
+					Param([ConfigAutomationContext] $context, [UIConfigMasterExtension] $resource, [System.Xml.XmlElement] $element)
+					
+				};
+				
+				AppyExtension = 
+				{
+					Param([ConfigAutomationContext] $context, [UIConfigMasterExtension] $extensionType, [System.Xml.XmlElement] $mainElement)
+					
+					$variableGroupsScript = $extensionType.ParameterizeString("`$(ThisFolder)./../azuredevops/VSTSDump-VariableGroups.ps1")
+					
+					$elements = $mainElement.SelectNodes("ImportVariableGroup[@VariableGroupId]")
+					foreach($element in $elements){
+						$variableGroupId = $element.GetAttribute("VariableGroupId")
+						$context.Display("{magenta}Loading Variable Groups: {gray}$($variableGroupId)")
+						
+						$tempXml = New-TemporaryFile 
+						$command = "&`"powershell.exe`" `"&'$($variableGroupsScript)' -VariableGroupId $($variableGroupId)`" -ExportToFile `"$($tempXml)`""
+						# $context.Display("{gray}[command] $($command)")
+						$output = Invoke-Expression $command
+						[XML] $newElementDoc = Get-Content $tempXml -Raw
+						if($newElementDoc.FirstChild.Error){
+							throw "Loading Error: {white}$($xml.FirstChild.Error){gray}"
+						}
+						
+						$newElement = $mainElement.OwnerDocument.ImportNode($newElementDoc.FirstChild, $true)
+						$newElement = $element.ParentNode.ReplaceChild($newElement, $element)
+						# $context.Display("Replacing Load VariableGroup $($newElement.Name)")
+						$deleted = del $tempXml
+					}
+					
+					return $mainElement
+				};
+			}
+		]]></ConfigMasterExtensionType>
+		<ConfigMasterExtensionType Name="RequiredKeyVaultAccess"><![CDATA[
+			return @{
+				DefineExtension = 
+				{
+					Param([ConfigAutomationContext] $context, [UIConfigMasterExtension] $resource, [System.Xml.XmlElement] $element)
+					
+				};
+				
+				AppyExtension = 
+				{
+					Param([ConfigAutomationContext] $context, [UIConfigMasterExtension] $extensionType, [System.Xml.XmlElement] $mainElement)
+					
+					$elements = $mainElement.SelectNodes($extensionType.XPath())
+					foreach($element in $elements){
+
+						$resourceName = $element.ResourceName | ?expected -ErrorMessage "{white}ResourceName{gray} was not found in the required access definition, review XML:`r`n$($element.Outerxml)" -ErrorCallback {
+							continue
+						}
+						$keyVaultName = $element.KeyVaultName | ?expected -ErrorMessage "{white}KeyVaultName{gray} was not found in the required access definition, review XML:`r`n$($element.Outerxml)" -ErrorCallback {
+							continue
+						}
+						
+						
+						[XML]$xmlToImport = ('
+						<Template Ref="access-definitions">
+							<Action Name="Allow ''' + $resourceName + ''' to access key vault ''' + $keyVaultName + '''" Type="GiveKeyVaultAccess">
+								<Parameter Name="KeyVaultName" Value="' + $keyVaultName + '"/>
+								<Parameter Name="ResourceName">' + $resourceName +'</Parameter>
+								' + ($($element.ResourceGroup) | ?: { '<Parameter Name="ResourceGroup">' + $_ + '</Parameter>' } : "") + '
+								' + ($($element.ResourceType)  | ?: { '<Parameter Name="ResourceType">' + $_ + '</Parameter>' } : "") + '
+								' + ($($element.PermissionsToKey) | ?: { '<Parameter Name="PermissionsToKey">' + $_ + '</Parameter>' } : "") + '
+								' + ($($element.PermissionsToSecrets) | ?: { '<Parameter Name="PermissionsToSecrets">' + $_ + '</Parameter>' } : "") + '
+								' + ($($element.PermissionsToCertificates) | ?: { '<Parameter Name="PermissionsToCertificates">' + $_ + '</Parameter>' } : "") + '
+							</Action>
+						</Template>')
+						
+						$newElement = $mainElement.OwnerDocument.ImportNode($xmlToImport.FirstChild, $true)
+						$newElement = $element.ParentNode.ReplaceChild($newElement, $element)
+					}
+					
+					return $mainElement
+				};
+			}
+		]]></ConfigMasterExtensionType>
+		</ConfigMasterExtensionTypes>
+		<ConfigMasterExtensions>
+			<ConfigMasterExtension Name="ReplaceWrapper" XPath="//Replace" Type="ReplaceWrapper" />
+			<ConfigMasterExtension Name="PipelineVariable" XPath="self::node()[count(PipelineVariable[@Name]) &gt; 0]" Type="PipelineVariable" />
+			<ConfigMasterExtension Name="PipelineVariables" XPath="PipelineVariables" Type="PipelineVariables" />
+			<ConfigMasterExtension Name="LoadVariableGroup" XPath="self::node()[count(ImportVariableGroup[@VariableGroupId]) &gt; 0]" Type="LoadVariableGroup" />
+			<ConfigMasterExtension Name="RequiredKeyVaultAccess" XPath="RequiredAccess[@Type='KeyVault']" Type="RequiredKeyVaultAccess" />
+		</ConfigMasterExtensions>
+		
+	</XConfigMaster.Init>
+	<!-- ********************************************************************** -->
+	<!-- *                          P R E    L O A D                          * -->
+	<!-- ______________________________________________________________________ -->
+	<!-- * Usage: 2nd to be loaded. Should be mostly used for defining        * -->
+	<!-- *        Actions, Templates that are "Ref" elements (Elements with   * -->
+	<!-- *        both "Name"* and "Ref")                                     * -->
+	<!-- ********************************************************************** -->
+	<XConfigMaster.PreLoad>
+	</XConfigMaster.PreLoad>
+	<!-- ********************************************************************** -->
+	<!-- *                              L O A D                               * -->
+	<!-- ______________________________________________________________________ -->
+	<!-- * Usage: 3nd to be loaded. Should be mostly used for defining the    * -->
+	<!-- *        main logic, Meaning should only contain Referenced elements * -->
+	<!--          (Elements with only "Ref" attribute)                        * -->
+	<!-- ********************************************************************** -->
+	<XConfigMaster.Load>
+	</XConfigMaster.Load>
+	<!-- ********************************************************************** -->
+	<!-- *                          P O S T   L O A D                         * -->
+	<!-- ______________________________________________________________________ -->
+	<!-- * Usage: 4nd to be loaded. Should be mostly used for defining any    * -->
+	<!--          ImportTemplate logic to consume any defined work in step #3 * -->
+	<!-- ********************************************************************** -->
+	<XConfigMaster.PostLoad>
+	</XConfigMaster.PostLoad>
+</XConfigMaster>

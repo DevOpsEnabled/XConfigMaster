@@ -1,0 +1,1 @@
+Publish-Module -NuGetApiKey "" -Repository PSGallery -Path D:\VisualStudios\Repos\XConfigMaster -Force -Verbose
