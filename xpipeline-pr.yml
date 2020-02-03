@@ -1,5 +1,5 @@
 
-name: $(XConfigMaster.Major).$(XConfigMaster.Minor).$(Rev:r)-prerelease
+name: $(XConfigMaster.Major).$(XConfigMaster.Minor).$(Rev:r)-beta
 
 trigger: none
 pr:
