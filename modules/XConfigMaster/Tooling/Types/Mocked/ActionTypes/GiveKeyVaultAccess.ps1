@@ -9,7 +9,7 @@
 	Action = 
 	{
 		Param([ConfigAutomationContext] $context,[UIAction] $action)
-		$extracted = $action.Parameters().Extract(@("ResourceName", "ResourceGroup", "KeyVaultName", "PermissionsToKey", "ServicePrincipleId", "AADGroupName", "PermissionsToSecrets", "PermissionsToCertificates", "MSIEnableAADGroupApproach"))
+		$extracted = $action.Parameters().Extract(@("ResourceName", "ResourceGroup", "KeyVaultName", "PermissionsToKey", "ServicePrincipleId","ServicePrincipalName","AADGroupName", "PermissionsToSecrets", "PermissionsToCertificates", "MSIEnableAADGroupApproach"))
 		
 		$ResourceName               = $extracted.ResourceName
 		$ResourceGroup              = $extracted.ResourceGroup
@@ -20,6 +20,7 @@
 		$PermissionsToSecrets       = $extracted.PermissionsToSecrets -split ","
 		$PermissionsToCertificates  = $extracted.PermissionsToCertificates -split ","
 		$ServicePrincipleId         = $extracted.ServicePrincipleId
+		$ServicePrincipalName       = $extracted.ServicePrincipalName
 
 		
 		$keyVault = $context.AzureRmResources($KeyVaultName, $null, $null)
@@ -54,6 +55,13 @@
 			}
 		}
 		
+		$baseSearchParameters = [hashtable]::new()
+		if($ServicePrincipleId){
+			$baseSearchParameters.add("ObjectId", $ServicePrincipleId)
+		}
+		if($ServicePrincipalName){
+			$baseSearchParameters.add("ServicePrincipalName", $ServicePrincipalName)
+		}
 		if($AADGroupName -and ($MSIEnableAADGroupApproach -ieq "true") ){
 			
 			
@@ -73,9 +81,10 @@
 			$context.Display("   GroupId: " + ($aadGroup.ObjectId))
 
 			$context.Display("1. Handling Service Principal")
-			$servicePrincipal = Get-AzureADServicePrincipal -ObjectId $ServicePrincipleId
+			
+			$servicePrincipal = Get-AzureADServicePrincipal @baseSearchParameters
 			if(-not $servicePrincipal){
-				$context.Error("Service Principal '$($PrincipalId)' failed to be fetched with command 'Get-AzureRmADServicePrincipal'")
+				$context.Error("Service Principal '$($baseSearchParameters | ConvertTo-Json)' failed to be fetched with command 'Get-AzureRmADServicePrincipal'")
 				return $false
 			}
 			$context.Display("   PrincipleId: " + ($servicePrincipal.ObjectId))
@@ -88,7 +97,7 @@
 				$memberInGroup = Get-AzureADGroupMember -ObjectId $($aadGroup.ObjectId) | Where { $_.ObjectId -eq $($servicePrincipal.ObjectId) }
 				
 				if(-not $memberInGroup){
-					$context.Error("Group Membership was not successful when adding Service Principal '$($ServicePrincipleId)' to group '$($aadGroup.DisplayName)' ($($aadGroup.ObjectId)) using module 'Add-AzureRmADGroupMember'")
+					$context.Error("Group Membership was not successful when adding Service Principal '$($baseSearchParameters | ConvertTo-Json)' to group '$($aadGroup.DisplayName)' ($($aadGroup.ObjectId)) using module 'Add-AzureRmADGroupMember'")
 					return $false
 				}
 			}
@@ -103,7 +112,7 @@
 		else{
 			$context.Display("Adding ServicePrincipleId {magenta}$($ServicePrincipleId){gray} Access to key vault {magenta}$($KeyVaultName){gray}")
 
-			Set-AzureRmKeyVaultAccessPolicy -VaultName $KeyVaultName -ObjectId $($ServicePrincipleId) -PermissionsToKeys $PermissionsToKey -PermissionsToSecrets $PermissionsToSecrets -PermissionsToCertificates $PermissionsToCertificates
+			Set-AzureRmKeyVaultAccessPolicy -VaultName $KeyVaultName @baseSearchParameters -PermissionsToKeys $PermissionsToKey -PermissionsToSecrets $PermissionsToSecrets -PermissionsToCertificates $PermissionsToCertificates
 		}
 		# Return Bool
 		return $true

@@ -187,7 +187,6 @@
 				Validate = 
 				{
 					Param([ConfigAutomationContext] $context, [object]$name)
-					
 					return $true
 				};
 				TransformInput = 
@@ -605,11 +604,13 @@
 					
 					$keyVaultName 			 = $($element.GetAttribute("KeyVaultName").ToString())
 					$secretName			     = $($element.GetAttribute("SecretName").ToString())
-					$skipCachingValue        = $($element.GetAttribute("SkipCachingValue"))
+					$skipCachingValue    = $($element.GetAttribute("SkipCachingValue"))
+					$validationValue     = $($element.GetAttribute("ValidationValue"))
 					
 					$inputStrategy | Add-Member -MemberType NoteProperty -Name "_keyVaultName" -Value $keyVaultName -TypeName String -Force
 					$inputStrategy | Add-Member -MemberType NoteProperty -Name "_secretName" -Value $secretName -TypeName String -Force
 					$inputStrategy | Add-Member -MemberType NoteProperty -Name "_skipCachingValue" -Value $false -TypeName bool -Force
+					$inputStrategy | Add-Member -MemberType NoteProperty -Name "_validationValue" -Value $false -TypeName Object -Force
 					
 					if($skipCachingValue -and $skipCachingValue.ToString() -ieq "true"){
 						$inputStrategy._skipCachingValue = $true
