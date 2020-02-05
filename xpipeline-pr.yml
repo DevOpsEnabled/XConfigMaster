@@ -1,5 +1,5 @@
 
-name: $(XConfigMaster.Major).$(XConfigMaster.Minor).$(Rev:r)-prerelease
+name: $(XConfigMaster.Major).$(XConfigMaster.Minor).$(Rev:r)
 
 trigger: none
 pr:
@@ -12,6 +12,12 @@ variables:
   
 jobs:
   - template: xpipeline-template-base.yml
+    parameters:
+      prePublishSteps: 
+        - powershell: Update-ModuleManifest -Path "$(ModulePath)/XConfigMaster.psd1" -Prerelease "-pr$(System.PullRequest.PullRequestNumber)"
+          workingDirectory: $(ModulePath)
+          name: markasprerelease
+          displayName: Mark as Prerelease from PR
           
     
 

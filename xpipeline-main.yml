@@ -1,5 +1,5 @@
 
-name: 2.0.0.$(Rev:r)
+name: $(XConfigMaster.Major).$(XConfigMaster.Minor).$(Rev:r).0
 
 trigger:
   branches:
@@ -8,12 +8,12 @@ trigger:
   paths:
     include:
     - modules/XConfigMaster
-    
+pr: none 
 
 variables:
 - template: xpipeline-template-variables.yml
 
-jobs:
+jobs: 
   - template: xpipeline-template-base.yml
           
           
