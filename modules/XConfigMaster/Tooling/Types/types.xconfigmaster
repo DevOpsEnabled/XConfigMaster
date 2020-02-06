@@ -113,7 +113,7 @@
 						if(-not $action.Parameters().Validate(@("Folder"))){
 							return $false
 						}
-						
+					   $extract = $action.Parameters().Extract(@("Folder"))
 						if($action.TestProperty("DontSkipInValidation","true",$true)){
 							Remove-Item -Path $($extract.Folder) -Force -Recurse
 						}
