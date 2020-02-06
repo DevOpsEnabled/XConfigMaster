@@ -114,6 +114,9 @@
 							return $false
 						}
 						
+						if($action.TestProperty("DontSkipInValidation","true",$true)){
+							Remove-Item -Path $($extract.Folder) -Force -Recurse
+						}
 						return $true
 					};
 					
