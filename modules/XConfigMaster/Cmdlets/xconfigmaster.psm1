@@ -2425,190 +2425,6 @@ class UITypeDefinition: HasContext {
 		
 	}
 }
-class VSTSModule: HasContext{
-	[string] $PersonalAccessToken
-	[string] $Account
-	VSTSModule([ConfigAutomationContext] $context, [string]$personalAccessToken, [string]$account):base($context){
-		$this.PersonalAccessToken = $personalAccessToken
-		$this.Account             = $account
-	}
-	#{
-	#	"allChangesIncluded": true,
-	#	"changeCounts": {
-	#		"Edit": 16
-	#	},
-	#	"changes": [
-	#	{
-	#		"item": {
-	#		"objectId": "5fa82b08cb1e03f38dbc4a3948e51cb44d4179cc",
-	#		"originalObjectId": "f386dd79e29eafa06fc31d1cacf54b5ef15ddff4",
-	#		"gitObjectType": "tree",
-	#		"commitId": "2e3bb2e640680987482241cc3a07428aa2c89fe7",
-	#		"path": "/src",
-	#...
-	[object]GetTestPointsOfTestSute([string]$testPlanId, [string]$testSuiteId){	    
-		$url = "https://dev.azure.com/$($this.Account)/ProjectAlpha/_apis/test/Plans/$($testPlanId)/Suites/$($testSuiteId)/points?api-version=5.0-preview.2"	
-		$commitObj =$this.InvokeRestCall($url, $null, "Get")
-		
-		$ids = $commitObj.value | Foreach { $_.id}
-		$this.Context().Log("$($ids)")
-		return $ids
-	}
-	#{
-	#	"allChangesIncluded": true,
-	#	"changeCounts": {
-	#		"Edit": 16
-	#	},
-	#	"changes": [
-	#	{
-	#		"item": {
-	#		"objectId": "5fa82b08cb1e03f38dbc4a3948e51cb44d4179cc",
-	#		"originalObjectId": "f386dd79e29eafa06fc31d1cacf54b5ef15ddff4",
-	#		"gitObjectType": "tree",
-	#		"commitId": "2e3bb2e640680987482241cc3a07428aa2c89fe7",
-	#		"path": "/src",
-	#...
-	[object]CreateTestRun([string] $body){	    
-		$url = "https://dev.azure.com/$($this.Account)/ProjectAlpha/_apis/test/runs?api-version=5.0-preview.2"
-		
-		
-		
-		$commitObj =$this.InvokeRestCall($url, $body, "Post")
-		
-		
-		return $commitObj
-	}
-	#{
-	#	"allChangesIncluded": true,
-	#	"changeCounts": {
-	#		"Edit": 16
-	#	},
-	#	"changes": [
-	#	{
-	#		"item": {
-	#		"objectId": "5fa82b08cb1e03f38dbc4a3948e51cb44d4179cc",
-	#		"originalObjectId": "f386dd79e29eafa06fc31d1cacf54b5ef15ddff4",
-	#		"gitObjectType": "tree",
-	#		"commitId": "2e3bb2e640680987482241cc3a07428aa2c89fe7",
-	#		"path": "/src",
-	#...
-	[object]GetCommitChanges([string]$repositoryId, [string]$previousCommit, [string]$currentCommit){
-		$url = "https://$($this.Account).visualstudio.com/DefaultCollection/_apis/git/repositories/$($repositoryId)/diffs/commits?baseVersionType=commit&baseVersion=$($previousCommit)&targetVersionType=commit&targetVersion=$($currentCommit)&api-version=1.0"	
-		$commitObj =$this.InvokeRestCall($url, $null, "Get")
-		
-		return $commitObj
-	}
-	#{
-	#	"count": 1,
-	#	"value": [
-	#	{
-	#		"commitId": {
-	#		"author...
-	#...
-	# Example:
-	# https://mcprojectalpha.visualstudio.com/DefaultCollection/_apis/git/repositories/5a75af4e-9b71-42f8-8166-d331b693e206/commits?searchCriteria.itemPath=src\infrastructure\scripts\configurations&searchCriteria.toCommitId=c1ae8b1af1dbed961e3d5312452eb2dca0a31b30&$top=1	
-	[object]GetWorkItem([string]$workId){
-		$url = "https://$($this.Account).visualstudio.com/DefaultCollection/_apis/wit/workitems/$($workId)?api-version=4.1"
-		$resultObj =$this.InvokeRestCall($url, $null, "Get")
-		
-		return $resultObj
-	}
-	
-	#{
-	#	"count": 1,
-	#	"value": [
-	#	{
-	#		"commitId": {
-	#		"author...
-	#...
-	# Example:
-	# https://mcprojectalpha.visualstudio.com/DefaultCollection/_apis/git/repositories/5a75af4e-9b71-42f8-8166-d331b693e206/commits?searchCriteria.itemPath=src\infrastructure\scripts\configurations&searchCriteria.toCommitId=c1ae8b1af1dbed961e3d5312452eb2dca0a31b30&$top=1	
-	[object]QueryWorkItems([string]$query){
-		$url = "https://$($this.Account).visualstudio.com/_apis/wit/wiql?api-version=4.1"
-		
-		$body = @{}
-		$body["query"] = $query
-		$body = ConvertTo-Json $body
-		
-		$body = $body -replace '\\u0027',"'"
-		$body = $body -replace '\\u003c',"<"
-		$body = $body -replace '\\u003e',">"		
-		
-		$resultObj =$this.InvokeRestCall($url, $body, "Post")
-		
-		return $resultObj
-	}
-	
-	[object]GetRelease([int] $releaseId){
-		$url = "https://vsrm.dev.azure.com/$($this.Account)/ProjectAlpha/_apis/release/definitions/$($releaseId)?api-version=4.1-preview.3"
-		
-		$resultObj =$this.InvokeRestCall($url, $null, "Get")
-		
-		return $resultObj
-	}
-	[object]UpdateRelease([object] $newRelease){
-		$url = "https://vsrm.dev.azure.com/$($this.Account)/ProjectAlpha/_apis/release/definitions?api-version=4.1-preview.3"
-		
-		$body = ConvertTo-Json $newRelease -Depth 100
-		$resultObj =$this.InvokeRestCall($url, $body, "Put")
-		
-		return $resultObj
-
-	}
-	[object]GetBuilds(){
-		$url = "https://dev.azure.com/$($this.Account)/ProjectAlpha/_apis/build/definitions?api-version=4.1"
-		
-		$resultObj =$this.InvokeRestCall($url, $null, "Get")
-		
-		return $resultObj
-	}
-	[object]GetBuild([int] $buildId){
-		$url = "https://dev.azure.com/$($this.Account)/ProjectAlpha/_apis/build/definitions/$($buildId)?api-version=4.0"
-		
-		$resultObj =$this.InvokeRestCall($url, $null, "GET")
-		
-		return $resultObj
-	}
-	[object]UpdateBuild([object] $newRelease){
-		$url = "https://dev.azure.com/$($this.Account)/ProjectAlpha/_apis/build/definitions/$($newRelease.id)?api-version=4.0"
-		
-		$body = ConvertTo-Json $newRelease -Depth 100 -Compress
-		$body = ([System.Text.Encoding]::UTF8.GetBytes($body))
-		$resultObj =$this.InvokeRestCall($url, $body, "PUT")
-		
-		return $resultObj
-	}
-	[object] InvokeRestCall([string]$url, [object]$body, [string]$method){
-		$obj = @{}
-		try{
-			$this.Context().Log("$($method) $($url)")
-			Write-Host $body
-			$body | Set-Content "last-body.json"
-			# Base64-encodes the Personal Access Token (PAT) appropriately
-			$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f "",$this.PersonalAccessToken)))
-			$headers = [hashtable]::new()
-			$headers.Add("Content-Type","application/json")
-			$headers.Add("Cache-Control","no-cache")
-			$headers.Add("Authorization",("Basic {0}" -f $base64AuthInfo))
-			$obj = Invoke-RestMethod $url -Method $method -Headers $headers -Body $body
-		
-			return $obj
-		}
-		catch{
-			$statusCode = $_.Exception.Response.StatusCode
-            $respStream = $_.Exception.Response.GetResponseStream()
-            $reader = New-Object System.IO.StreamReader($respStream)
-            $reader.BaseStream.Position = 0
-            $responseBody = $reader.ReadToEnd() | ConvertFrom-Json
-			
-			
-			$result = $obj | ConvertTo-Json -Depth 100
-			$this.Context().Log("$($method) $($url)`r`n$($_.Exception.Message)`r`n$($responseBody)") 
-			Write-Host $result
-			throw $_
-		}
-	}
-}
 class HasReleaseDefinitionContext: HasContext{
     [UIReleaseDefinition] $_definition
     hidden [object] $_rawContent
@@ -6295,7 +6111,6 @@ class ConfigAutomationContext{
 	[UIInputScope]     $_overrideScope
 
 	[System.Collections.Stack] $rootScopes
-    [VSTSModule] $vstsModule 
 	[string[]] $includedScopes
 	[string[]] $excludedScopes
 	[object] $arguments
@@ -6325,7 +6140,6 @@ class ConfigAutomationContext{
         $this.arguments = [hashtable]::new()
 		$this.rootScopes = New-Object System.Collections.Stack
 		$this._locations = New-Object System.Collections.Stack
-        $this.vstsModule = [VSTSModule]::new($this, [string]$personalAccessToken, [string]$account)
 		
 		$this.rootScope = [UIAction]::new($this, $null, "ROOT_AUTOMATION")
 		$this.rootScope.InitialProps(@{Type="Component"}, "", $null, $null)
@@ -6879,9 +6693,6 @@ class ConfigAutomationContext{
 	[ConfigAutomationContext] Context(){
 		return $this
 	}
-    [VSTSModule] VSTSService(){
-        return $this.vstsModule
-    }
 	[UIInputScopeBase] CurrentScope(){
 		return $this.rootScope
 	}
@@ -7486,7 +7297,7 @@ Function Start-XConfigMaster{
 		#######################################################################
 		#######################################################################
 		if(-not $Global:automationContext -or $parameters["Force"]){
-			$Global:automationContext = New-ConfigAutomationContext "sbowo3q3tm7dgnbiw5lkfpg2bctxntck6zimeorl72nilg5eq6fq" "mcprojectalpha" 
+			$Global:automationContext = New-ConfigAutomationContext
 			$Global:automationContext.PopulateFromArguments($parameters)
 			
 			$parseFolder = [System.IO.Path]::Combine($rootpath, ".\")
