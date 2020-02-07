@@ -1,5 +1,5 @@
 
-name: $(XConfigMaster.Major).$(XConfigMaster.Minor).$(Rev:r)
+name: $(XConfigMaster.Major).$(XConfigMaster.Minor).$(Rev:r).0
 
 trigger: none
 pr:

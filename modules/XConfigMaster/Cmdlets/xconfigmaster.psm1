@@ -7442,14 +7442,14 @@ Function Start-XConfigMaster{
 		#######################################################################
 		#######################################################################
 		$version = (Get-Module XConfigMaster).Version
-		$version = "$($version.Major).$($version.Minor).$($version.Build).$($version.Revision)"
+		$version = $version.ToString()
 		Write-Host $version
 
 		if($parameters["Version"]){
 			$expectedVersion = $parameters["Version"]
 			
 			if($expectedVersion -ne $version){
-				$versions = Get-InstalledModule -Name XConfigMaster -AllVersions | ForEach-Object {"$($_.Major).$($_.Minor).$($_.Build).$($_.Revision)"}
+				$versions = Get-InstalledModule -Name XConfigMaster -AllVersions | ForEach-Object {$_.Version.ToString()}
 				$command = ""
 				if(-not ($expectedVersion -in $versions)){
 					$command += "Update-Module XConfigMaster -RequiredVersion $expectedVersion -Force `r`n"
