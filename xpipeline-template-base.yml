@@ -24,6 +24,12 @@ jobs:
       - powershell: Publish-Module -NuGetApiKey "$(NuGetApiKey)" -Repository PSGallery -Path $(ModulePath) -Force -Verbose
         name: publishModule
         displayName: Publishing Module 
+      - powershell: |
+          $SummaryFilePath = "$(System.DefaultWorkingDirectory)/summary.md"
+          Write-Output "# Test Summary" > $SummaryFilePath
+          Write-Output "##vso[task.uploadsummary]$SummaryFilePath"
+        name: outputSummary
+        displayName: Show Summary
           
           
     
