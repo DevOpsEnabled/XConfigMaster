@@ -14,7 +14,7 @@ jobs:
   - template: xpipeline-template-base.yml
     parameters:
       prePublishSteps: 
-        - powershell: Update-ModuleManifest -Path "$(ModulePath)/XConfigMaster.psd1" -Prerelease "-pr$(System.PullRequest.PullRequestNumber)"
+        - powershell: Update-ModuleManifest -Path "$(ModulePath)/XConfigMaster.psd1" -Prerelease "pr$(System.PullRequest.PullRequestNumber)"
           workingDirectory: $(ModulePath)
           name: markasprerelease
           displayName: Mark as Prerelease from PR

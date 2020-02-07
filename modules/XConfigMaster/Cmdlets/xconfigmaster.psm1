@@ -7282,7 +7282,7 @@ class ConfigAutomationContext{
 
 							### INFO: We want to now populate the XML that contains only 'Ref' defining items ###
 							### BUG CHECK: Why are we setting 'FullParsing' to true. This will cause it to do another filtering on the xml item ###
-							$this.FullParsing($false)
+							$this.FullParsing($true)
 							$this.SaveXmlEnabled($false)
 							$this.PopulateFromXml($new, $this.GetRootScope(), $false)
 							$this.SaveXmlEnabled($true)
