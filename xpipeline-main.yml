@@ -1,0 +1,24 @@
+
+name: $(XConfigMaster.Major).$(XConfigMaster.Minor).$(Rev:r).0
+
+trigger:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - modules/XConfigMaster
+pr: none 
+
+variables:
+- template: xpipeline-template-variables.yml
+
+jobs: 
+  - template: xpipeline-template-base.yml
+          
+          
+    
+
+
+    
+   

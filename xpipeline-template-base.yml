@@ -1,0 +1,39 @@
+parameters:
+  - name: prePublishSteps
+    type: stepList
+    default: []
+
+jobs:
+  - job: publish
+    steps:
+      - task: qetza.replacetokens.replacetokens-task.replacetokens@3
+        name: tokenizeModuleDefinition
+        displayName: Tokenize Module
+        inputs:
+          targetFiles: XConfigMaster.psd1
+          tokenPrefix: '$('
+          tokenSuffix: ')'
+          actionOnMissing: fail
+          verbosity: detailed
+          rootDirectory: $(ModulePath)
+      - powershell: Update-ModuleManifest -Path "$(ModulePath)/XConfigMaster.psd1" -FileList (Get-ChildItem "*.*" -Recurse | Foreach-Object {$_.FullName})
+        workingDirectory: $(ModulePath)
+        name: updateFileList
+        displayName: Update Module File List
+      - ${{ parameters.prePublishSteps }}
+      - powershell: Publish-Module -NuGetApiKey "$(NuGetApiKey)" -Repository PSGallery -Path $(ModulePath) -Force -Verbose
+        name: publishModule
+        displayName: Publishing Module 
+      - powershell: |
+          $SummaryFilePath = "$(System.DefaultWorkingDirectory)/summary.md"
+          Write-Output "# Test Summary" > $SummaryFilePath
+          Write-Output "##vso[task.uploadsummary]$SummaryFilePath"
+        name: outputSummary
+        displayName: Show Summary
+          
+          
+    
+
+
+    
+   

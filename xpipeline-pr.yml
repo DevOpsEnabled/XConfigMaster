@@ -1,0 +1,34 @@
+
+name: $(XConfigMaster.Major).$(XConfigMaster.Minor).$(Rev:r)
+
+trigger: none
+pr:
+  branches:
+    include:
+    - master
+
+variables:
+  - template: xpipeline-template-variables.yml
+  
+jobs:
+  - template: xpipeline-template-base.yml
+    parameters:
+      prePublishSteps: 
+        - powershell: |
+            $stableVersion = (Find-Module XConfigMaster -AllowPrerelease:$false).Version
+            $revision = $stableVersion -replace "(\d+.\d+.\d+.)(\d+)",'$2'
+            $revision = [Int]::Parse($revision)
+            $base = $stableVersion -replace "(\d+.\d+.\d+.)(\d+)",'$1'
+            $revision += 1
+            $newVersion = $base + $revision
+            Update-ModuleManifest -Path "$(ModulePath)/XConfigMaster.psd1" -ModuleVersion $newVersion
+            Write-Output "##vso[build.updatebuildnumber]$newVersion"
+          workingDirectory: $(ModulePath)
+          name: markasprerelease
+          displayName: Mark as Prerelease from PR
+          
+    
+
+
+    
+   
