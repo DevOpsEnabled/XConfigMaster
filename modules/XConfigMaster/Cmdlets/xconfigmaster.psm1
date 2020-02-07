@@ -7243,15 +7243,22 @@ class ConfigAutomationContext{
 		}
 		
 		try{
-		
 			$this.PushIndent()
 			
-			
+			### INFO: Does Transformations of the XML based on UIConfigMasterExtensionCollection ###
+			### BUG CHECK: From the look of this line, it seems like there will be issues when you are expecting extensions to be consumed based on hiercy ###
+			###            Essentially, this is saying it will get the 'RootScope' and use the extensions from there, instead of using the 'CurrentScope'  ###
 			$xmlElement = $this.Context().GetRootScope().Extensions().ApplyExtension($xmlElement)
+
 			# $this.Display("{magenta}FullParsing {white}$($this.FullParsing()){gray}")
+
+			### INFO: We dont want to dig deep into the XmlTree if we are not doing full parsing ###
+			### INFO: This is mainly used to avoid real parsing... But we need to find more on why this was done ###
 			if(-not $this.FullParsing()){
 				
 				# $this.Display("{magenta}Owner Filter: {white}$($xmlElement.OwnerDocument.FirstChild.GetAttribute("Filtered")){gray}")
+				
+				### INFO: Not sure if this is still valid, since no where we are setting this attribute ###
 				if(-not ($xmlElement.OwnerDocument.FirstChild.GetAttribute("Filtered") -ieq "true") -and ($xmlElement.LocalName -ne "Template"))
 				{
 					
@@ -7260,19 +7267,22 @@ class ConfigAutomationContext{
 						$measured = Measure-Command {
 							$new = $xmlElement.CloneNode($true)
 
-						
 							$root = $new.SelectSingleNode("//ConfigAutomation")
 							if(-not $root){
 								$root = $new
 							}
 							
+							### INFO: Essentially removing any xml elements that either are or have 'Ref' defining items so that all thats left are 'Ref' defining items ###
 							$items = $null
 							do{
 								$items = $root.SelectNodes(".//*[not((@Ref and @Name) or count(.//*[@Ref and @Name]) != 0)]") | Foreach {$_.ParentNode.RemoveChild($_)}
 							}while($items)
 							
 							# $this.Display($new.OuterXml)
-							$this.FullParsing($true)
+
+							### INFO: We want to now populate the XML that contains only 'Ref' defining items ###
+							### BUG CHECK: Why are we setting 'FullParsing' to true. This will cause it to do another filtering on the xml item ###
+							$this.FullParsing($false)
 							$this.SaveXmlEnabled($false)
 							$this.PopulateFromXml($new, $this.GetRootScope(), $false)
 							$this.SaveXmlEnabled($true)
@@ -7428,6 +7438,9 @@ Function Start-XConfigMaster{
 			
 		}
 
+		#######################################################################
+		#######################################################################
+		#######################################################################
 		$version = (Get-Module XConfigMaster).Version
 		$version = "$($version.Major).$($version.Minor).$($version.Build).$($version.Revision)"
 		Write-Host $version
