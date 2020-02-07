@@ -22,6 +22,7 @@ jobs:
             $revision += 1
             $newVersion = $base + $revision
             Update-ModuleManifest -Path "$(ModulePath)/XConfigMaster.psd1" -ModuleVersion $newVersion
+            Write-Output "##vso[build.updatebuildnumber]$newVersion"
           workingDirectory: $(ModulePath)
           name: markasprerelease
           displayName: Mark as Prerelease from PR
