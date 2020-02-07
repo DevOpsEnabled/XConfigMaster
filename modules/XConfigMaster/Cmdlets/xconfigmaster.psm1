@@ -7496,9 +7496,12 @@ Function Start-XConfigMaster{
 			$Global:automationContext.PopulateFromFolder($toolingFolder, 5)
 			$uiActions = $Global:automationContext.ResolveAction($actions, $false)
 			
-			for($i = 0; $i -lt ($uiActions.Count - 1); $i += 1)
-			{
-				$Global:automationContext.PopScope()
+			# TODO - Need to move this logic into the context
+			if($uiActions){
+				for($i = 0; $i -lt ($uiActions.Count - 1); $i += 1)
+				{
+					$Global:automationContext.PopScope()
+				}
 			}
 
 			if(-not $uiActions -or $uiActions -eq $null){
