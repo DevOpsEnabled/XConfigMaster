@@ -6964,7 +6964,7 @@ class ConfigAutomationContext{
 			$this.Display("`r`n{green}:: {green}S u c c e s s {green}::{gray}`r`n")
 		}
 	}
-	[void] ExecuteActionsFromArguments([string[]] $txtActions){
+	[array] ResolveAction([string[]] $txtActions, [bool] $expected){
 		if($this.arguments["Execution:LogGroups"]){
 			$this.arguments["LogGroups"] = $this.arguments["Execution:LogGroups"]
 		}
@@ -7036,9 +7036,11 @@ class ConfigAutomationContext{
 			
 			# N o t   F o u n d
 			if(-not $uiActionFound){
-				$this.Error("Action '{white}$($txtAction){gray}' was not found")
+				if($expected){
+					$this.Error("Action '{white}$($txtAction){gray}' was not found")
+				}
 				$uiAction = $null
-				return
+				return $null
 			}
 			
 			
@@ -7064,8 +7066,14 @@ class ConfigAutomationContext{
 			$txtAction = $txtActions[$txtActionIndex]
 			
 		}while($txtActionIndex -lt $txtActions.Count)
+
+
+		return $uiActionBreadcrums + @($uiAction)
+	}
+	[void] ExecuteActionsFromArguments([string[]] $txtActions){
 		
-		if(-not $uiAction){
+		$uiActions = $this.ResolveAction($txtActions, $true)
+		if(-not $uiActions){
 			$this.Error("Cmd", "No Actions Correspond to '$($txtActions -join ' ')'")
 			return
 		}
@@ -7088,11 +7096,11 @@ class ConfigAutomationContext{
 		$this.Display("{white}::::::::::::::::::::::::::::::{gray} {magenta}Main Actions{white} :::::::::::::::::::::::::::::::{gray}")
 		
 		# Execute main action
-		$this.ExecuteActionInFull($uiAction)
+		$this.ExecuteActionInFull($uiActions[$uiActions.Count - 1])
 		
 		# $this.Display("{white}::::::::::::::::::::::::::::::{gray} {magenta}Post Actions{white} :::::::::::::::::::::::::::::::{gray}")
 		
-		for($i = 0; $i -lt $uiActionBreadcrums.Count; $i += 1)
+		for($i = 0; $i -lt ($uiActions.Count - 1); $i += 1)
 		{
 			$this.PopScope()
 		}
@@ -7482,7 +7490,10 @@ Function Start-XConfigMaster{
 			Write-Host "Reading in Settings..." 
 			$toolingFolder = [System.IO.Path]::Combine($PSScriptRoot,"..\Tooling")
 			$Global:automationContext.PopulateFromFolder($toolingFolder, 5)
-			$Global:automationContext.PopulateFromFolder($parseFolder, 5)
+			$uiActions = $Global:automationContext.ResolveAction($txtActions, $false)
+			if(-not $uiActions -or $uiActions -eq $null){
+				$Global:automationContext.PopulateFromFolder($parseFolder, 5)
+			}
 		}
 		else {
 			$Global:automationContext.StartSession()
