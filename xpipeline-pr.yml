@@ -14,7 +14,14 @@ jobs:
   - template: xpipeline-template-base.yml
     parameters:
       prePublishSteps: 
-        - powershell: Update-ModuleManifest -Path "$(ModulePath)/XConfigMaster.psd1" -Prerelease "pr$(System.PullRequest.PullRequestNumber)"
+        - powershell: |
+          $stableVersion = (Find-Module XConfigMaster -AllowPrerelease:$false).Version
+          $revision = $stableVersion -replace "(\d+.\d+.\d+.)(\d+)",'$2'
+          $revision = [Int]::Parse($revision)
+          $base = $stableVersion -replace "(\d+.\d+.\d+.)(\d+)",'$1'
+          $revision += 1
+          $newVersion = $base + $revision
+          Update-ModuleManifest -Path "$(ModulePath)/XConfigMaster.psd1" -ModuleVersion $newVersion
           workingDirectory: $(ModulePath)
           name: markasprerelease
           displayName: Mark as Prerelease from PR
