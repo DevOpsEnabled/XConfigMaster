@@ -5124,6 +5124,10 @@ class UIParameter : HasContext{
 		}
 		
 		$parameterType = $this.ParameterType().Definition()
+		if(-not $parameterType){
+			$this.Error("Parameter Type {white}$($this.ParameterType().ParameterTypeName()){gray} was not found")
+			return "{red}FAILED{gray}"
+		}
 		if(-not $parameterType.ValidateInput($value, $this)){
 			$this.Error("Parameter {white}$($this.Name()){gray} failed validation against its type '{white}$($parameterType.ParameterTypeName()){gray}'")
 			return "{red}FAILED{gray}"
@@ -7491,6 +7495,12 @@ Function Start-XConfigMaster{
 			$toolingFolder = [System.IO.Path]::Combine($PSScriptRoot,"..\Tooling")
 			$Global:automationContext.PopulateFromFolder($toolingFolder, 5)
 			$uiActions = $Global:automationContext.ResolveAction($actions, $false)
+			
+			for($i = 0; $i -lt ($uiActions.Count - 1); $i += 1)
+			{
+				$Global:automationContext.PopScope()
+			}
+
 			if(-not $uiActions -or $uiActions -eq $null){
 				$Global:automationContext.PopulateFromFolder($parseFolder, 5)
 			}

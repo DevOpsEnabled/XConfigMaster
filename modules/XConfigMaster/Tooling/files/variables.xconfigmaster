@@ -17,7 +17,7 @@
 	<!-- *        both "Name"* and "Ref")                                     * -->
 	<!-- ********************************************************************** -->
 	<XConfigMaster.PreLoad>
-		<Parameter Name="xmodule.folders.files" Value="$(ThisFolder)"/>
+		<Parameter Name="xmodule.folders.files" Type="String" DefaultValue="$(ThisFolder)"/>
 	</XConfigMaster.PreLoad>
 	<!-- ********************************************************************** -->
 	<!-- *                              L O A D                               * -->

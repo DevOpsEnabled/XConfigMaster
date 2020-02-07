@@ -27,15 +27,21 @@
 	<!--          (Elements with only "Ref" attribute)                        * -->
 	<!-- ********************************************************************** -->
 	<XConfigMaster.Load>
+        <PipelineVariable Name="file.name" DefaultValue="devops"/>
+
         <Action Ref=":x">
-            <PipelineVariable Name="file.name" Default="devops"/>
+            
             <Action Name="create" Type="Script">
-                <Parameter Name="ScriptType" Type="Inline"/>
+                <Parameter Name="ScriptType" Value="Inline"/>
                 <Parameter Name="ScriptBlock">
-                    $file = "$(xmodule.folders.files)/template.xconfigmaster"
-                    $newFile = [System.IO.Path]::Combine((Get-Location) , "./$(file.name).xconfigmaster")
-                    copy $file $newFile
+                    copy "$(xmodule.folders.files)/template.xconfigmaster" ([System.IO.Path]::Combine((Get-Location) , "./$(file.name).xconfigmaster"))
                 </Parameter>
+
+                <Action Name="help" Type="Print">
+                    <Parameter Name="Content">
+                        xcm :x create [-file-name {File Name}]
+                    </Parameter>
+                </Action>
             </Action>
         </Action>
 	</XConfigMaster.Load>
