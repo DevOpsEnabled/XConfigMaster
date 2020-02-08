@@ -1,8 +1,8 @@
 # XConfigMaster
 
 [![Build Status](https://dev.azure.com/xconfigmaster/XConfigMaster/_apis/build/status/xconfigmaster-release?branchName=master)](https://dev.azure.com/xconfigmaster/XConfigMaster/_build/latest?definitionId=2&branchName=master)
-![Downloads](https://img.shields.io/powershellgallery/dt/XConfigMaster?label=Downloads)
-![PowerShell Gallery Version](https://img.shields.io/powershellgallery/v/XConfigMaster?label=XConfigMaster)
+[![Downloads](https://img.shields.io/powershellgallery/dt/XConfigMaster?label=Downloads)](https://www.powershellgallery.com/packages/XConfigMaster)
+[![PowerShell Gallery Version](https://img.shields.io/powershellgallery/v/XConfigMaster?label=XConfigMaster)](https://www.powershellgallery.com/packages/XConfigMaster)
 ## Usage
 1. `Install-Module XConfigMaster`
 2. `xcm :x create`
