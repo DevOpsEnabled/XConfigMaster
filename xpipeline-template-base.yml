@@ -18,8 +18,8 @@ jobs:
           rootDirectory: $(ModulePath)
       - powershell: |
           $files = @()
-          copy "./tooling" "./src"
-          copy "./system" "./src"
+          copy "./tooling" "./src" -Recurse
+          copy "./system" "./src" -Recurse
           $files += (Get-ChildItem "./src/tooling/*.*" -Recurse | Foreach-Object {$_.FullName})
           $files += (Get-ChildItem "./src/system/*.*" -Recurse | Foreach-Object {$_.FullName})
 
