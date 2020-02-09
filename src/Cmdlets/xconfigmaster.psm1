@@ -7341,7 +7341,7 @@ Function Start-XConfigMaster{
 			$parseFolder = [System.IO.Path]::Combine($rootpath, ".\")
 			# Read in Settings
 			Write-Host "Reading in Settings..." 
-			$toolingFolder = [System.IO.Path]::Combine($PSScriptRoot,"..\Tooling")
+			$toolingFolder = [System.IO.Path]::Combine($PSScriptRoot,"..\")
 			$Global:automationContext.PopulateFromFolder($toolingFolder, 5)
 			$uiActions = $Global:automationContext.ResolveAction($actions, $false)
 			
