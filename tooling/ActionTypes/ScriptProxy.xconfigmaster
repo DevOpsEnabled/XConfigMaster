@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <XConfigMaster>
 	<!-- ********************************************************************** -->
 	<!-- *                             I N I T                                * -->
@@ -17,6 +17,7 @@
 	<!-- *        both "Name"* and "Ref")                                     * -->
 	<!-- ********************************************************************** -->
 	<XConfigMaster.PreLoad>
+		<Parameter Name="ScriptProxyActionTypeFilePath" Value="$(ThisFolder)/ScriptProxy.xscript.ps1"/>
 	</XConfigMaster.PreLoad>
 	<!-- ********************************************************************** -->
 	<!-- *                              L O A D                               * -->
@@ -26,11 +27,6 @@
 	<!--          (Elements with only "Ref" attribute)                        * -->
 	<!-- ********************************************************************** -->
 	<XConfigMaster.Load>
-		<Parameters>
-			<Parameter Name="MSBuildPath" Type="String">
-				<InputStrategy Type="OutputVariable" VariableName="MSBuildPath" />
-			</Parameter>
-		</Parameters>
 	</XConfigMaster.Load>
 	<!-- ********************************************************************** -->
 	<!-- *                          P O S T   L O A D                         * -->

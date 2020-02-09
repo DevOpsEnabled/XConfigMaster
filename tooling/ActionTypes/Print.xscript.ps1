@@ -1,42 +1,72 @@
+<#
+.SYNOPSIS
+	A brief description of the function or script.
+
+.DESCRIPTION
+	A longer description.
+
+.PARAMETER FirstParameter
+	Description of each of the parameters.
+	Note:
+	To make it easier to keep the comments synchronized with changes to the parameters,
+	the preferred location for parameter documentation comments is not here,
+	but within the param block, directly above each parameter.
+
+.PARAMETER SecondParameter
+	Description of each of the parameters.
+
+.INPUTS
+	Description of objects that can be piped to the script.
+
+.OUTPUTS
+	Description of objects that are output by the script.
+
+.EXAMPLE
+	Example of how to run the script.
+
+.LINK
+	Links to further documentation.
+
+.NOTES
+	Detail on what the script does, if this is needed.
+
+#>
+
 #:xheader:
 #Type=ActionType;
+#ScriptPath=$(ScriptProxyActionTypeFilePath);
+#mainScriptPath=$(ThisFile);
+#includeActionTypeParameters=true;
+#cleanEnabled=true;
+#hideVerbose=true;
 #:xheader:
+Param(
+	# Action Type Default Parameters
+	[object] $context,
+	[object] $action,
 
-@{
-	Clean = 
-	{
-		Param([ConfigAutomationContext] $context,[UIAction] $action)
-		return $true
-	};
-	Action = 
-	{
-		Param([ConfigAutomationContext] $context,[UIAction] $action)
-		
-		$content = $action.Parameters().Get("Content", $false)
-		$context.Display($($content.Value()))
-		return $true
-	};
-	CanExecute = 
-	{
-		Param([ConfigAutomationContext] $context,[UIAction] $action)
-		return $true
-	};
-	Validate = 
-	{
-		Param([ConfigAutomationContext] $context,[UIAction] $action)
-		
-		$content = $action.Parameters().Get("Content", $false)
-		
-		if(-not $content){
-			return $false
-		}
+	[ValidateSet('Validate','Clean','Execute')]
+	[string] $lifeCycle,
 
-		$content.IsRequired($true)
+	# Set to true in the 'Validation' Lifecycle
+	[switch] $WhatIf,
 
-		if(-not $content.Value()){
-			return $false
-		}
-		return $true
-	};
-	
+	# Set to true in the 'Clean' Lifecycle
+	[switch] $Clean,
+
+	# Content that will be printed on the screen
+	[ValidatePattern(".+")]
+	[string] $Content
+)
+
+if($lifeCycle -eq 'Validate'){
+	$context.Display("WhatIf: $($content)")
+	return
+}
+if($lifeCycle -eq 'Clean'){
+	return
+}
+if($lifeCycle -eq 'Execute'){
+	$context.Display("WhatIf: $($content)")
+	return
 }

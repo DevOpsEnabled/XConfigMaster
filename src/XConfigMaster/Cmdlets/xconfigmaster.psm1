@@ -1,4 +1,51 @@
 
+function New-DynamicParameter
+{
+    [CmdletBinding(DefaultParameterSetName = 'Core')]    
+    param
+    (
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true)][string] $Name,
+        [Parameter(Mandatory = $true, ParameterSetName = 'Core')][Parameter(Mandatory = $true, ParameterSetName = 'ValidateSet')][type] $Type,
+        [Parameter(Mandatory = $false)][string] $ParameterSetName = '__AllParameterSets',
+        [Parameter(Mandatory = $false)][bool] $Mandatory = $false,
+        [Parameter(Mandatory = $false)][int] $Position,
+        [Parameter(Mandatory = $false)][bool] $ValueFromPipelineByPropertyName = $false,
+        [Parameter(Mandatory = $false)][string] $HelpMessage,
+        [Parameter(Mandatory = $true, ParameterSetName = 'ValidateSet')][string[]] $ValidateSet,
+        [Parameter(Mandatory = $false, ParameterSetName = 'ValidateSet')][bool] $IgnoreCase = $true
+    )
+
+    process
+    {
+        # Define Parameter Attributes
+        $ParameterAttribute = New-Object System.Management.Automation.ParameterAttribute
+        $ParameterAttribute.ParameterSetName = $ParameterSetName
+        $ParameterAttribute.Mandatory = $Mandatory
+        $ParameterAttribute.Position = $Position
+        $ParameterAttribute.ValueFromPipelineByPropertyName = $ValueFromPipelineByPropertyName
+        $ParameterAttribute.HelpMessage = $HelpMessage
+
+        # Define Parameter Validation Options if ValidateSet set was used
+        if ($PSCmdlet.ParameterSetName -eq 'ValidateSet')
+        {
+            $ParameterValidateSet = New-Object System.Management.Automation.ValidateSetAttribute -ArgumentList $ValidateSet -Strict (!$IgnoreCase)
+        }
+
+        # Add Parameter Attributes and ValidateSet to an Attribute Collection
+        $AttributeCollection = New-Object Collections.ObjectModel.Collection[System.Attribute]
+        $AttributeCollection.Add($ParameterAttribute)
+        $AttributeCollection.Add($ParameterValidateSet)
+
+        # Add parameter to parameter list
+        $Parameter = New-Object System.Management.Automation.RuntimeDefinedParameter -ArgumentList @($Name, $Type, $AttributeCollection)
+
+        # Expose parameter to the namespace
+        $ParameterDictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
+        $ParameterDictionary.Add($Name, $Parameter)
+        return $ParameterDictionary
+    }
+}
+Export-ModuleMember -Function New-DynamicParameter
 Function Enter-Block {
 	Param(
 		[string] $Name
@@ -424,9 +471,11 @@ class HasContext{
 			$value = [System.IO.Path]::GetDirectoryName($this._generatedFromFile)
 			#$this.Context().Display("XMLParsing", "Adding new Local Variable {white}ThisFolder{gray}  as {white}$value{gray}")
 			$this._localVariables.Add("ThisFolder", $value)
+			$this._localVariables.Add("ThisFile", $this._generatedFromFile)
 		}
 		else{
 			$this._localVariables.Add("ThisFolder", "Unkown from type {white}$($this.GetType().Name){gray}")
+			$this._localVariables.Add("ThisFile", "Unkown from type {white}$($this.GetType().Name){gray}")
 			# $this.Context().Warning("XMLParsing", "Generated file '{white}$($this._generatedFromFile){gray}' does not exists, will not populate local variable {white}ThisFolder{gray}")
 		}
     }
@@ -464,9 +513,11 @@ class HasContext{
 			$value = [System.IO.Path]::GetDirectoryName($this._generatedFromFile)
 			#$this.Context().Display("XMLParsing", "Adding new Local Variable {white}ThisFolder{gray}  as {white}$value{gray}")
 			$this._localVariables.Add("ThisFolder", $value)
+			$this._localVariables.Add("ThisFile", $this._generatedFromFile)
 		}
 		else{
 			$this._localVariables.Add("ThisFolder", "Unkown from type {white}$($this.GetType().Name){gray}")
+			$this._localVariables.Add("ThisFile", "Unkown from type {white}$($this.GetType().Name){gray}")
 			# $this.Context().Warning("XMLParsing", "Generated file '{white}$($this._generatedFromFile){gray}' does not exists, will not populate local variable {white}ThisFolder{gray}")
 		}
     }
@@ -498,9 +549,11 @@ class HasContext{
 			$value = [System.IO.Path]::GetDirectoryName($this._generatedFromFile)
 			#$this.Context().Display("XMLParsing", "Adding new Local Variable {white}ThisFolder{gray}  as {white}$value{gray}")
 			$this._localVariables.Add("ThisFolder", $value)
+			$this._localVariables.Add("ThisFile", $this._generatedFromFile)
 		}
 		else{
 			$this._localVariables.Add("ThisFolder", "Unkown from type {white}$($this.GetType().Name){gray}")
+			$this._localVariables.Add("ThisFile", "Unkown from type {white}$($this.GetType().Name){gray}")
 			# $this.Context().Warning("XMLParsing", "Generated file '{white}$($this._generatedFromFile){gray}' does not exists, will not populate local variable {white}ThisFolder{gray}")
 		}
 	}
@@ -839,6 +892,9 @@ class HasContext{
 	}
 	[bool] IsRoot(){
 		return $($this.Id()) -eq $($this.Context().GetRootScope().Id())
+	}
+	[object] GetProperty([string] $name){
+		return $this.ParameterizeString($this._properties[$name]);
 	}
 	[bool] TestProperty([string] $name, [string] $value){
 		return $this.TestProperty($name, $value, $true)
@@ -2310,6 +2366,50 @@ class UITypeDefinition: HasContext {
 	[string] Content(){
 		return $this.ParameterizeString($this._content)
 	}
+	[bool] InitialProps([hashtable] $props, [string] $bodyContent, [System.Xml.XmlElement] $element, [string] $location){
+		#TEMP $this.Action("Initial Props")
+		if(-not ([HasContext]$this).InitialProps($props, $bodyContent,$element, $location)){
+			return $false
+		}
+		if($props.ContainsKey("ScriptPath") -and $props.ContainsKey("ScriptContent")){
+			$this.Error("Not allowed to have both '{white}ScriptContent{gray}' and '{white}ScriptPath{gray}' as properties")
+			return $false
+		}
+		elseif($props.ContainsKey("ScriptPath")){
+			$this._contentType = "ScriptFile"
+			$this._content = $props["ScriptPath"]
+			$this._typeDefinition = $null
+		}
+		elseif($props.ContainsKey("ScriptContent")){
+			$this._contentType = "ScriptContent"
+			$this._content = $props["ScriptContent"]
+			$this._typeDefinition = $null
+		}
+		
+		return $true
+		 
+	}
+	[bool] UpdateProps([hashtable] $props, [string] $bodyContent, [System.Xml.XmlElement] $element, [string] $location){
+		if(-not ([HasContext]$this).UpdateProps($props, $bodyContent, $element, $location)){
+			return $false
+		}
+		if($props.ContainsKey("ScriptPath") -and $props.ContainsKey("ScriptContent")){
+			$this.Error("Not allowed to have both '{white}ScriptContent{gray}' and '{white}ScriptPath{gray}' as properties")
+			return $false
+		}
+		elseif($props.ContainsKey("ScriptPath")){
+			$this._contentType = "ScriptFile"
+			$this._content = $props["Scriptpath"]
+			$this._typeDefinition = $null
+		}
+		elseif($props.ContainsKey("ScriptContent")){
+			$this._contentType = "ScriptContent"
+			$this._content = $props["ScriptContent"]
+			$this._typeDefinition = $null
+		}
+		return $true
+	}
+
 	[object] TypeDefinition(){
 		if($this._typeDefinition){
 			return $this._typeDefinition
@@ -6936,7 +7036,7 @@ class ConfigAutomationContext{
 		}
 		$this.PopParmeterizingEnabled()
 	}
-	[object] ExtractXHeading([String] $file){
+	[hashtable] ExtractXHeading([String] $file){
 		if(-not ([System.IO.File]::Exists($file))){
 			$this.Error("File '{white}$($file){gray}' was not found. Unable to extract the {white}XHeading{gray}")
 			return $null;
@@ -6956,12 +7056,12 @@ class ConfigAutomationContext{
 
 		$header = $header.Groups[1].Value
 		$matches = [regex]::Matches($header, '(\w+)\=([^;]+)')
-		$heading = new-object psobject
+		$heading = [hashtable]::new()
 		foreach($match in $matches){
 			$name = $match.Groups[1].Value
 			$value = $match.Groups[2].Value
 
-			$heading | Add-Member -MemberType NoteProperty -Name $name -Value $value -TypeName String -Force
+			$heading.Add($name, $value)
 		}
 
 		return $heading
@@ -6985,27 +7085,58 @@ class ConfigAutomationContext{
 		$name = [regex]::Replace($([System.IO.Path]::GetFileName($file)), '^(.*)\.xscript\.ps1$', '$1') 
 		# Write-Color "Loading {white}$($name){gray}"; 
 		if($heading.Type -eq "ParameterType"){
-			$this.CurrentScope().ParameterTypes().Add([UIParameterTypeDefinition]::new($this.Context(), $name, "ScriptFile", $file, $this.CurrentScope()))
+			$type = [UIParameterTypeDefinition]::new($this.Context(), $name, "ScriptFile", $file, $this.CurrentScope())
+			$collection = $this.CurrentScope().ParameterTypes()
 		}
 		elseif($heading.Type -eq "InputType"){
-			$this.CurrentScope().InputTypes().Add([UIInputTypeDefinition]::new($this.Context(), $name, "ScriptFile", $file, $this.CurrentScope()))
+			$type = [UIInputTypeDefinition]::new($this.Context(), $name, "ScriptFile", $file, $this.CurrentScope())
+			$collection = $this.CurrentScope().InputTypes()
 		}
 		elseif($heading.Type -eq "ActionType"){
-			$this.CurrentScope().ActionTypes().Add([UIActionTypeDefinition]::new($this.Context(), $name, "ScriptFile", $file, $this.CurrentScope()))
+			$type = [UIActionTypeDefinition]::new($this.Context(), $name, "ScriptFile", $file, $this.CurrentScope())
+			$collection = $this.CurrentScope().ActionTypes()
 		}
 		elseif($heading.Type -eq "ExtensionType"){
-			$this.CurrentScope().ExtensionTypes().Add([UIConfigMasterExtensionType]::new($this.Context(), $name, "ScriptFile", $file, $this.CurrentScope()))
+			$type = [UIConfigMasterExtensionType]::new($this.Context(), $name, "ScriptFile", $file, $this.CurrentScope())
+			$collection = $this.CurrentScope().ExtensionTypes()
+
 		}
 		else{
 			$this.Error("Unknown heading type '{white}$($heading.Type){gray} found in XScript '{white}$file{gray}'. `r`n"+ `
 			            "   Only {white}ParameterType{gray}, {white}InputType{gray}, {white}ActionType{gray}, or {white}ExtensionType{gray} are current available")
 			return;
 		}
+
+		
+		if(-not $type.InitialProps($heading, $(Get-Content $file -Raw), $null, $file)){
+			$this.Error("Unable to update the props for '{white}$($name){gray}' of type '{white}$($heading.Type){gray}' from xscript '{white}$($file){gray}'")
+			return;	
+		}
+
+		if(-not $collection.Add($type)){
+			$this.Error("Unable to add '{white}$($name){gray}' of type '{white}$($heading.Type){gray}' from xscript '{white}$($file){gray}' to collection named '{white}$($collection.Name()){gray}'")
+			return;	
+		}
+
+	}
+	
+    [void] PopulateFromXScriptsInFolder([String] $folder, [int] $maxDepth){
+		$xscriptFiles = Get-ChildItem -Path $folder -Filter "*.xscript.ps1" -Recurse -Depth 5 | Where {[System.IO.File]::Exists($_.FullName)} | Foreach {$_.FullName}
+		$this.Title("XScripts Files")
+		$this._logLock = $true
+		$xscriptFiles | ForEach-Object { 
+			# Write-Color "Loading {white}$($_){gray}"; 
+			$this.PushLocation($_)
+			$this.PopulateFromXScript($_)
+			$this.PopLocation()
+			# Write-Color "";
+		}
+		$this._logLock = $false
+		
 	}
     [void] PopulateFromFolder([String] $folder, [int] $maxDepth){
 		
-		$xscriptFiles = Get-ChildItem -Path $folder -Filter "*.xscript.ps1" -Recurse -Depth 5 | Where {[System.IO.File]::Exists($_.FullName)} | Foreach {$_.FullName}
-
+		
 		$files = Get-ChildItem -Path $folder -Filter "*.xconfigmaster" -Recurse -Depth 5 | Where {[System.IO.File]::Exists($_.FullName)} | Foreach {$_.FullName}
 		$xmls  = $files | Foreach {@{Xml = ([XML](Get-Content $_ -Raw)); File = $_; Used = "Yes"}}
 		
@@ -7018,18 +7149,6 @@ class ConfigAutomationContext{
 			$this.Error("There were $($na.Count) files that had no loading tags in existence:   $(@($na | Foreach {$_.File}) -join "`r`n   ")")
 			return
 		}
-
-		$this.Title("XScripts Files")
-		$this._logLock = $true
-		$xscriptFiles | ForEach-Object { 
-			# Write-Color "Loading {white}$($_){gray}"; 
-			$this.PushLocation($_)
-			$this.PopulateFromXScript($_)
-			$this.PopLocation()
-			# Write-Color "";
-		}
-		$this._logLock = $false
-		
 		###################################################################
 		#                        I N I T   F I L E S                      #
 		###################################################################
@@ -7342,7 +7461,12 @@ Function Start-XConfigMaster{
 			# Read in Settings
 			Write-Host "Reading in Settings..." 
 			$toolingFolder = [System.IO.Path]::Combine($PSScriptRoot,"..\")
+			
+			$Global:automationContext.PopulateFromXScriptsInFolder($toolingFolder, 5)
+			$Global:automationContext.PopulateFromXScriptsInFolder($parseFolder, 5)
+
 			$Global:automationContext.PopulateFromFolder($toolingFolder, 5)
+			
 			$uiActions = $Global:automationContext.ResolveAction($actions, $false)
 			
 			# TODO - Need to move this logic into the context
