@@ -12,7 +12,19 @@ variables:
 
 jobs: 
   - template: xpipeline-template-base.yml
-          
+    prePublishSteps: 
+        - powershell: |
+            $stableVersion = (Find-Module XConfigMaster -AllowPrerelease:$false).Version
+            $revision = $stableVersion -replace "(\d+.\d+.)(\d+)(.\d+)",'$2'
+            $revision = [Int]::Parse($revision)
+            $base = $stableVersion -replace "(\d+.\d+.)(\d+)(.\d+)",'$1'
+            $revision += 1
+            $newVersion = $base + $revision + ".0"
+            Update-ModuleManifest -Path "$(ModulePath)/XConfigMaster.psd1" -ModuleVersion $newVersion
+            Write-Output "##vso[build.updatebuildnumber]$newVersion"
+          workingDirectory: $(ModulePath)
+          name: markasprerelease
+          displayName: Mark as Release from PR      
           
     
 
