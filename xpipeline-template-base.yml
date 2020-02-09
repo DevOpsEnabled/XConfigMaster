@@ -20,7 +20,7 @@ jobs:
           $files = @()
           copy "./tooling" "./src"
           copy "./system" "./src"
-          $files += (Get-ChildItem "*.*" -Recurse | Foreach-Object {$_.FullName})
+          $files += (Get-ChildItem "./src/*.*" -Recurse | Foreach-Object {$_.FullName})
 
           Update-ModuleManifest -Path "$(ModulePath)/XConfigMaster.psd1" -FileList $files
 
