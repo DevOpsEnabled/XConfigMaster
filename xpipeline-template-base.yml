@@ -16,6 +16,18 @@ jobs:
           actionOnMissing: fail
           verbosity: detailed
           rootDirectory: $(ModulePath)
+      - powershell: |
+          $files = @()
+          copy "./tooling" "$(ModulePath)" -Recurse
+          copy "./system" "$(ModulePath)" -Recurse
+          $files += (Get-ChildItem "$(ModulePath)/tooling/*.*" -Recurse | Foreach-Object {$_.FullName})
+          $files += (Get-ChildItem "$(ModulePath)/system/*.*" -Recurse | Foreach-Object {$_.FullName})
+
+          Update-ModuleManifest -Path "$(ModulePath)/XConfigMaster.psd1" -FileList $files
+
+        workingDirectory: $(System.DefaultWorkingDirectory)
+        name: updateFileList
+        displayName: Update Module File List
       - ${{ parameters.prePublishSteps }}
       - powershell: Publish-Module -NuGetApiKey "$(NuGetApiKey)" -Repository PSGallery -Path $(ModulePath) -Force -Verbose
         name: publishModule

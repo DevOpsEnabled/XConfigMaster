@@ -4,7 +4,7 @@ variables:
   - group: secrets-base
   - group: variables-base
   - name: ModulePath
-    value: $(System.DefaultWorkingDirectory)/src
+    value: $(System.DefaultWorkingDirectory)/src/XConfigMaster
           
           
     
