@@ -12,7 +12,8 @@ variables:
 
 jobs: 
   - template: xpipeline-template-base.yml
-    prePublishSteps: 
+    parameters:
+      prePublishSteps: 
         - powershell: |
             $stableVersion = (Find-Module XConfigMaster -AllowPrerelease:$false).Version
             $revision = $stableVersion -replace "(\d+.\d+.)(\d+)(.\d+)",'$2'
