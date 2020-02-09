@@ -19,7 +19,7 @@ jobs:
       - powershell: |
           $files = @()
           $files += (Get-ChildItem "./tooling" -Filter "*.*" -Recurse | Foreach-Object {$_.FullName})
-          $files += (Get-ChildItem "./system" -Filter "*.*" -Recurse | Foreach-Object {$_.FullName})
+          $files += (Get-ChildItem "./system" -Filter "*.*" -Recurse | Foreach-Object {$_.FullName}) 
 
           Update-ModuleManifest -Path "$(ModulePath)/XConfigMaster.psd1" -FileList 
 
