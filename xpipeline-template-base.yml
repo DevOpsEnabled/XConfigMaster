@@ -21,7 +21,7 @@ jobs:
           $files += (Get-ChildItem "./tooling" -Filter "*.*" -Recurse | Foreach-Object {$_.FullName})
           $files += (Get-ChildItem "./system" -Filter "*.*" -Recurse | Foreach-Object {$_.FullName}) 
 
-          Update-ModuleManifest -Path "$(ModulePath)/XConfigMaster.psd1" -FileList 
+          Update-ModuleManifest -Path "$(ModulePath)/XConfigMaster.psd1" -FileList $files
 
         workingDirectory: $(System.DefaultWorkingDirectory)
         name: updateFileList
