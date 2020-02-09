@@ -64,7 +64,7 @@
 			$content = Get-Content $temp -Raw
 			del $temp
 		}
-		else{
+		elseif(-not $extracted.ScriptScope){
 			$scriptCommand = "&'$($extracted.ScriptPath)' $($extracted.ScriptArguments)"
 			# $scriptCommand = "&powershell.exe "+'"'+"$($extracted.ScriptPath)"+'"'+" $($extracted.ScriptArguments)"
 			$temp = New-TemporaryFile
@@ -78,6 +78,10 @@
 			
 			$content = Get-Content $temp -Raw
 			del $temp
+		}
+		else{
+			$context.Error("Unknown valid of {white}ScriptScope{gray} ({white}$($extracted.ScriptScope){gray}). Allowed values are '{white}NewSession{gray}' and '{white}SameSession{gray}'")
+			return $false
 		}
 		
 		$context.Display("{white}Result:{gray}`r`n$($content)")

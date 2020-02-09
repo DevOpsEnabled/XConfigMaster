@@ -30,7 +30,10 @@
         <PipelineVariable Name="file.name" DefaultValue="devops"/>
 
         <Action Ref=":x">
-            
+            <Action Name="actiontypes" Type="ShowActionTypes"/>
+			<Action Name="inputtypes" Type="ShowInputTypes"/>
+			<Action Name="extensiontypes" Type="ShowExtensionTypes"/>
+			<Action Name="parametertypes" Type="ShowParameterTypes"/>
             <Action Name="create" Type="Script">
                 <Parameter Name="ScriptType" Value="Inline"/>
                 <Parameter Name="ScriptBlock">
