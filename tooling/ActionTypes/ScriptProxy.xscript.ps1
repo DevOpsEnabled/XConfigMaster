@@ -53,7 +53,7 @@
 
         $arguments = ""
         foreach($inputParameter in $inputParameters.psobject.properties){
-            $arguments += "-$($inputParameter.Name) `$(`$inputParameters.$($inputParameter.Name)) "
+            $arguments += "-$($inputParameter.Name) `$(`$inputParameters.`"$($inputParameter.Name)`") "
         }
 
         if($setupParameters.includeActionTypeParameters -ieq "true"){
