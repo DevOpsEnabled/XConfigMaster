@@ -1,3 +1,4 @@
+
 <#
 .SYNOPSIS
 	A brief description of the function or script.
@@ -52,21 +53,14 @@ Param(
 	[switch] $WhatIf,
 
 	# Set to true in the 'Clean' Lifecycle
-	[switch] $Clean,
-
-	# Content that will be printed on the screen
-	[ValidatePattern(".+")]
-	[string] $Content
+	[switch] $Clean
 )
 
-if($lifeCycle -eq 'Validate'){
-	$context.Display("WhatIf: $($content)")
-	return $true
+$allWorked = $true
+if($lifeCycle -eq "Execute"){
+    $action.LoadChildren()
+    foreach($subAction in $action.Actions().Items()){
+        $context.Display($subAction.Name())
+    }
 }
-if($lifeCycle -eq 'Clean'){
-	return $true
-}
-if($lifeCycle -eq 'Execute'){
-	$context.Display("WhatIf: $($content)")
-	return $true
-}
+return $true

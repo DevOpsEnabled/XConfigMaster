@@ -17,7 +17,7 @@
 	<!-- *        both "Name"* and "Ref")                                     * -->
 	<!-- ********************************************************************** -->
 	<XConfigMaster.PreLoad>
-        <Action Name=":x" Type="ActionCollection" Ref=":x"/>
+        <Action Name=":x-tests" Type="ActionGroup" Ref=":x-tests"/>
 	</XConfigMaster.PreLoad>
 	<!-- ********************************************************************** -->
 	<!-- *                              L O A D                               * -->
@@ -27,25 +27,8 @@
 	<!--          (Elements with only "Ref" attribute)                        * -->
 	<!-- ********************************************************************** -->
 	<XConfigMaster.Load>
-        <PipelineVariable Name="file.name" DefaultValue="devops"/>
-
-        <Action Ref=":x">
-            <Action Name="actiontypes" Type="ShowActionTypes"/>
-			<Action Name="inputtypes" Type="ShowInputTypes"/>
-			<Action Name="extensiontypes" Type="ShowExtensionTypes"/>
-			<Action Name="parametertypes" Type="ShowParameterTypes"/>
-            <Action Name="create" Type="Script">
-                <Parameter Name="ScriptType" Value="Inline"/>
-                <Parameter Name="ScriptBlock">
-                    copy "$(xmodule.folders.files)/template.xconfigmaster" ([System.IO.Path]::Combine((Get-Location) , "./$(file.name).xconfigmaster"))
-                </Parameter>
-
-                <Action Name="help" Type="Print">
-                    <Parameter Name="Content">
-                        xcm :x create [-file-name {File Name}]
-                    </Parameter>
-                </Action>
-            </Action>
+        <Action Ref=":x-tests">
+			
         </Action>
 	</XConfigMaster.Load>
 	<!-- ********************************************************************** -->

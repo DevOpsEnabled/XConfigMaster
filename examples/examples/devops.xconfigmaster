@@ -37,7 +37,7 @@
 	<!-- ********************************************************************** -->
 	<XConfigMaster.PostLoad>
 		<Action Ref=":x" >
-			<Action Name="examples" Type="ActionGroup">
+			<Action Name="examples" Type="ActionCollection">
 				<ImportTemplate Name=":examples" TemplateId=":examples-template"/>
 
 				<Action Name="help" Type="ActionGroup">

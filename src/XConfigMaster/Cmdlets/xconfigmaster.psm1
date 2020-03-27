@@ -5086,11 +5086,11 @@ class UIParameter : HasContext{
 		$parameterType = $this.ParameterType().Definition()
 		if(-not $parameterType){
 			$this.Error("Parameter Type {white}$($this.ParameterType().ParameterTypeName()){gray} was not found")
-			return "{red}FAILED{gray}"
+			return $null
 		}
 		if(-not $parameterType.ValidateInput($value, $this)){
 			$this.Error("Parameter {white}$($this.Name()){gray} failed validation against its type '{white}$($parameterType.ParameterTypeName()){gray}'")
-			return "{red}FAILED{gray}"
+			return $null
 		}
 		$transformedValue = $parameterType.TransformInputValue($value, $this)
 		
@@ -7466,20 +7466,7 @@ Function Start-XConfigMaster{
 			$Global:automationContext.PopulateFromXScriptsInFolder($parseFolder, 5)
 
 			$Global:automationContext.PopulateFromFolder($toolingFolder, 5)
-			
-			$uiActions = $Global:automationContext.ResolveAction($actions, $false)
-			
-			# TODO - Need to move this logic into the context
-			if($uiActions){
-				for($i = 0; $i -lt ($uiActions.Count - 1); $i += 1)
-				{
-					$Global:automationContext.PopScope()
-				}
-			}
-
-			if(-not $uiActions -or $uiActions -eq $null){
-				$Global:automationContext.PopulateFromFolder($parseFolder, 5)
-			}
+			$Global:automationContext.PopulateFromFolder($parseFolder, 5)
 		}
 		else {
 			$Global:automationContext.StartSession()
