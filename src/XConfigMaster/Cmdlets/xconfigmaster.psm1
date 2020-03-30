@@ -3927,7 +3927,7 @@ class UIAction : UIInputScope{
 		$this._variableOrigins = New-Object hashtable
 		$this._actionsAlreadyPerformed = new-object hashtable
 		$this.Hierarchical($false)
-    }
+	}
 	[bool] RefreshSession(){
 		if(-not ([HasContext]$this).RefreshSession()){
 			return $false
@@ -3953,16 +3953,19 @@ class UIAction : UIInputScope{
 		return $true
 	}
 	[bool] Perform([ScriptBlock] $scriptAction, [string] $actionName){
-	
+		$this._localVariables.Add("PerformingAction", $actionName)
 		
+
 		
 		if($this.Context().ExitRequested()){
 			$this.Warning("User Exiting...")
+			$this._localVariables.Remove("PerformingAction")
 			return $false
 		}
 		
 		$this.RefreshSessionIfNeeded()
 		if($this._actionsAlreadyPerformed.ContainsKey($actionName)){
+			$this._localVariables.Remove("PerformingAction")
 			return $this._actionsAlreadyPerformed[$actionName]
 		}
 		
@@ -4042,10 +4045,12 @@ class UIAction : UIInputScope{
 		{
 			$isValid = $this.Get("PostActions").Perform($scriptAction, $actionName, $isRootLevel) -and $isValid
 			$this._actionsAlreadyPerformed[$actionName] = $isValid
+			$this._localVariables.Remove("PerformingAction")
 			return $isValid
 		}
 		
 		$this._actionsAlreadyPerformed[$actionName] = $isValid
+		$this._localVariables.Remove("PerformingAction")
 		return $isValid
 	}
     [UIActionTypeReference] ActionType(){
