@@ -17,6 +17,9 @@
 	<!-- *        both "Name"* and "Ref")                                     * -->
 	<!-- ********************************************************************** -->
 	<XConfigMaster.PreLoad>
+		<Parameter Name="NugetExePath" Type="String">
+			<InputStrategy Type="OutputVariable" VariableName="NugetExePath"/>
+		</Parameter>
         <Action Name=":x" Type="ActionCollection" Ref=":x"/>
 	</XConfigMaster.PreLoad>
 	<!-- ********************************************************************** -->
