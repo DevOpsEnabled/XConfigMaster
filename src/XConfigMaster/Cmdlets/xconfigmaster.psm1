@@ -564,10 +564,14 @@ class HasContext{
 		$this._localVariables[$name] = $value
 	}
 	[void] PrintParameterBreakdown(){
-		Write-Host "`r`nParameters:"
+		
 		$notDefinedParameters = [hashtable]::new()
-		foreach($parameter in $this.Context().RequiredParameters()){
-			if($parameter.IsRequired() -and $parameter.IsMissing()){
+		$missingParameters   = $this.Context().RequiredParameters() | Where-Object {$_.IsRequired() -and $_.IsMissing()}
+
+		if($missingParameters.Count -gt 0)
+		{
+			Write-Host "`r`nParameters:"
+			foreach($parameter in $missingParameters){
 				$content = "   $($parameter.ToString()) {gray} "
 				if($parameter.InputStrategies().Items().Count -eq 0){
 					$content += "{white}[{red}Not Defined{white}]"
@@ -584,16 +588,20 @@ class HasContext{
 					$content += $contentText
 				}
 				Write-Color $content
-				
 			}
 		}
-
-		Write-Host "`r`nParameters (Not Defined):"
-		$notDefinedNames = $notDefinedParameters.GetEnumerator() | % {$_.Name}
-		foreach($parameterName in $notDefinedNames){
-			$parameterName = "{0,-50}" -f $parameterName
-			$content = "   {white}$($parameterName){gray} {gray}[{red}Not Defined{gray}]"
-			Write-Color $content
+		
+		if($notDefinedParameters.Count -gt 0)
+		{
+			Write-Host "`r`nParameters (Not Defined):"
+			
+			$notDefinedParameters = $notDefinedParameters.GetEnumerator() | % {$_.Name}
+			$notDefinedNames = $notDefinedParameters
+			foreach($parameterName in $notDefinedNames){
+				$parameterName = "{0,-50}" -f $parameterName
+				$content = "   {white}$($parameterName){gray} {gray}[{red}Not Defined{gray}]"
+				Write-Color $content
+			}
 		}
 	}
 	
@@ -1999,7 +2007,7 @@ class UIInputScopeBase : HasCollectionContext{
 		
 	}
     UIInputScopeBase([ConfigAutomationContext] $context, [UIInputScopeBase] $parentScope, [String] $name, [string] $referenceName):base($context, $this, $name, $referenceName){
-		if(-not $parentScope){
+		if(-not $parentScope -and $name -ne "ROOT_AUTOMATION"){
 			Write-Color "{red}Error, {white}$($name){red} of type {white}$($this.GetType().Name){red} came in with null scope{gray}"
 		}
 		$this._parentScope = $parentScope
@@ -6803,33 +6811,31 @@ class ConfigAutomationContext{
 			$parentText = "{gray}{white}" + $actialAction.ParentScope().FullName("{gray} > {white}") + "{gray}"
 		}
 		$this.Display("$($parentText) > {white}{magenta}$($actialAction.Name()){white}{gray}")
-			
-		$this.Title("`r`n Validating `r`n")
-		[HasContext]::Prefix += "  "
-		$success = $actialAction.Validate()
-		[HasContext]::Prefix = [HasContext]::Prefix.Substring(2)
-		$actialAction.PrintParameterBreakdown()
 		
-		if(-not $success){
-			return
+		$success = $true
+		if(-not $actialAction.TestProperty("SkipValidate", "true", $true))
+		{
+			$this.Title("`r`n Validating `r`n")
+			[HasContext]::Prefix += "  "
+			$success = $actialAction.Validate()
+			[HasContext]::Prefix = [HasContext]::Prefix.Substring(2)
 		}
 		
-		
-		$this.Title("`r`n Cleaning `r`n")
-		[HasContext]::Prefix += "  "
-		$success = $actialAction.Clean()
-		[HasContext]::Prefix = [HasContext]::Prefix.Substring(2)
-	
-		if(-not $success){
-			$actialAction.PrintParameterBreakdown()
-			return
+		if(-not $actialAction.TestProperty("SkipClean", "true", $true) -and -not $actialAction.TestProperty("SkipValidate", "true", $true))
+		{
+			$this.Title("`r`n Cleaning `r`n")
+			[HasContext]::Prefix += "  "
+			$success = $actialAction.Clean()
+			[HasContext]::Prefix = [HasContext]::Prefix.Substring(2)
 		}
 		
-		$this.Title("`r`n Executing `r`n")
-		[HasContext]::Prefix += "  "
-		$success = $actialAction.ExecuteAction()
-		[HasContext]::Prefix = [HasContext]::Prefix.Substring(2)
-
+		if($success -and -not $actialAction.TestProperty("SkipExecute", "true", $true))
+		{
+			$this.Title("`r`n Executing `r`n")
+			[HasContext]::Prefix += "  "
+			$success = $actialAction.ExecuteAction()
+			[HasContext]::Prefix = [HasContext]::Prefix.Substring(2)
+		}
 		
 		if(-not $success){
 			$actialAction.PrintParameterBreakdown()
@@ -6839,6 +6845,7 @@ class ConfigAutomationContext{
 			$actialAction.PrintParameterBreakdown()
 			$this.Display("`r`n{green}:: {green}S u c c e s s {green}::{gray}`r`n")
 		}
+		
 	}
 	[array] ResolveAction([string[]] $txtActions, [bool] $expected){
 		if($this.arguments["Execution:LogGroups"]){
@@ -6854,7 +6861,7 @@ class ConfigAutomationContext{
 		$txtAction          = $null
 		$txtActionIndex     = -1
 		$includeAction      = $false
-		
+		$notFoundActionStr  = "{red}Not Set{gray}"
 		do{
 			if($includeAction){
 				$uiActionBreadcrums.Add($uiAction)
@@ -6920,11 +6927,14 @@ class ConfigAutomationContext{
 			}
 			
 			
-			$uiActionName = "{red}Not Set{gray}"
+			$uiActionName = $notFoundActionStr
 			if($uiAction){
 				$uiActionName = $uiAction.FullName()
-			}	
-			$this.Display("Found Action '{white}$($uiActionFound.Name()){gray}' in '{white}$($uiActionName){gray}'")
+			}
+			if($uiActionName -ne $notFoundActionStr){
+				$this.Display("Found Action '{white}$($uiActionFound.Name()){gray}' in '{white}$($uiActionName){gray}'")
+			}
+			
 			
 			if($includeAction){
 				$uiActionName = "{red}Not Set{gray}"

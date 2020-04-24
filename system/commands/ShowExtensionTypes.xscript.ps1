@@ -16,7 +16,8 @@ Param(
 )
 
 if($WhatIf){
-	#$context.Display("WhatIf...")
+	$context.Display("WhatIf...")
+    return $true
 }
 else{
     $types = $context.GetRootScope().ExtensionTypes().Items()
