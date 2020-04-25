@@ -33,6 +33,7 @@
         <PipelineVariable Name="file.name" DefaultValue="devops"/>
 
         <Action Ref=":x" SkipValidate="true">
+			<Action Name="help" Type="ShowActions" SkipValidate="true"/>
             <Action Name="actiontypes" Type="ShowActionTypes" SkipValidate="true"/>
 			<Action Name="inputtypes" Type="ShowInputTypes"  SkipValidate="true"/>
 			<Action Name="extensiontypes" Type="ShowExtensionTypes"  SkipValidate="true"/>
