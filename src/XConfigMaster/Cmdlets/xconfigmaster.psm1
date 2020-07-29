@@ -3960,19 +3960,19 @@ class UIAction : UIInputScope{
 		}
 
 		if($this._properties["RunWhen"]){
-			if($this._properties["RunWhen"] -ie "failed"){
+			if($this._properties["RunWhen"] -ieq "failed"){
 				if($this.Context().IsValid()){
 					$reason.Value = "{yellow}Skipping{gray} {magenta}RunWhen {gray}={white} failed {gray} Current Status is Passing"
 					return $false
 				}
 			}
-			elseif($this._properties["RunWhen"] -ie "succeeded"){
+			elseif($this._properties["RunWhen"] -ieq "succeeded"){
 				if(-not $this.Context().IsValid()){
 					$reason.Value = "{yellow}Skipping{gray} {magenta}RunWhen {gray}={white} succeeded {gray} Current Status is Failure"
 					return $false
 				}
 			}
-			elseif($this._properties["RunWhen"] -ie "always"){
+			elseif($this._properties["RunWhen"] -ieq "always"){
 				return $true
 			}
 			else{
