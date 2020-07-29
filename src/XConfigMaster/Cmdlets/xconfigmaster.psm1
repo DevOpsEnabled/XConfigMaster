@@ -7498,11 +7498,11 @@ Function Start-XConfigMaster{
 			Write-Host "Reading in Settings..." 
 			$toolingFolder = [System.IO.Path]::Combine($PSScriptRoot,"..\")
 			
-			$Global:automationContext.PopulateFromXScriptsInFolder($toolingFolder, 5)
-			$Global:automationContext.PopulateFromXScriptsInFolder($parseFolder, 5)
+			$Global:automationContext.PopulateFromXScriptsInFolder($toolingFolder, 7)
+			$Global:automationContext.PopulateFromXScriptsInFolder($parseFolder, 7)
 
-			$Global:automationContext.PopulateFromFolder($toolingFolder, 5)
-			$Global:automationContext.PopulateFromFolder($parseFolder, 5)
+			$Global:automationContext.PopulateFromFolder($toolingFolder, 7)
+			$Global:automationContext.PopulateFromFolder($parseFolder, 7)
 		}
 		else {
 			$Global:automationContext.StartSession()
