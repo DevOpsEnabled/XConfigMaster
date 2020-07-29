@@ -7173,7 +7173,7 @@ class ConfigAutomationContext{
     [void] PopulateFromFolder([String] $folder, [int] $maxDepth){
 		
 		
-		$files = Get-ChildItem -Path $folder -Filter "*.xconfigmaster" -Recurse -Depth 5 | Where {[System.IO.File]::Exists($_.FullName)} | Foreach {$_.FullName}
+		$files = Get-ChildItem -Path $folder -Filter "*.xconfigmaster" -Recurse -Depth $maxDepth | Where {[System.IO.File]::Exists($_.FullName)} | Foreach {$_.FullName}
 		$xmls  = $files | Foreach {@{Xml = ([XML](Get-Content $_ -Raw)); File = $_; Used = "Yes"}}
 		
 		$inits = @($xmls  | Foreach {@{Xml = $_.Xml.SelectSingleNode("//XConfigMaster.Init"); File = $_.File; Original = $_}} | Where {$_.Xml} | Where {-not ([String]::IsNullOrEmpty($_.Xml.InnerXml)) }) | Foreach {@{Xml = (([XML]"<XConfigMaster.Init>$($_.Xml.InnerXml)</XConfigMaster.Init>").FirstChild); File=($_.File)}}   
