@@ -4479,10 +4479,17 @@ class UIInputStrategyCollection : HasCollectionContext{
 	[int] Order(){
 		return $this.Priority()
 	}
-	[object] ExecuteStrategies(){
+	[object] ExecuteStrategies([UIParameter] $parameter){
 		$sortedStrategies = $this.Items()
 		foreach($strategy in $sortedStrategies){
 			$value = $strategy.ExecuteStrategy()
+			if($parameter._properties["PlainText"] -ieq "true"){
+				$value = $this.ParameterizeStringAsPlainText($value)
+			}
+			else{
+				$value = $this.ParameterizeString($value)
+			}
+
 			if($value){
 				return $value
 			}
@@ -4604,15 +4611,15 @@ class UIInputStrategy : HasContext{
 		$type = $element.GetAttribute("Type")
 		$priority = $element.GetAttribute("Priority")
 		
-		# Fix Name
-		if(-not $name){
-			# $countExisting = @($strategies.Items() | Where {$_.InputType().Name() -ieq $type}).Count
-			$name = $type
-		}
-		
 		# Fix Priority
 		if(-not ([int]::TryParse($priority, [ref]$priority))){
 			$priority = @($strategies.Items()).Count
+		}
+
+		# Fix Name
+		if(-not $name){
+			# $countExisting = @($strategies.Items() | Where {$_.InputType().Name() -ieq $type}).Count
+			$name = "$($type)_$($priority)"
 		}
 		
         $strategy = [UIInputStrategy]::new($context, $name, $priority, [UIInputTypeReference]::new($context, $type, $strategies.CurrentScope()), $strategies.CurrentScope())
@@ -5109,13 +5116,7 @@ class UIParameter : HasContext{
 			$this.IsRequired($true)
 		}
 		
-		$rawValue = $this.InputStrategies().ExecuteStrategies()
-		if($this._properties["PlainText"] -ieq "true"){
-			$value = $this.ParameterizeStringAsPlainText($rawValue)
-		}
-		else{
-			$value = $this.ParameterizeString($rawValue)
-		}
+		$value = $this.InputStrategies().ExecuteStrategies($this)
 		
 		$parameterType = $this.ParameterType().Definition()
 		if(-not $parameterType){
