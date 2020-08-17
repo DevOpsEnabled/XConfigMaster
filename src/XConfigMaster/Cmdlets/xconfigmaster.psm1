@@ -6484,7 +6484,6 @@ class ConfigAutomationContext{
 					Resource          = $null
 				}
 				$resources.Add($resource)
-				$this._azureRmResources.Add($resource)
 			}
 			else{
 				foreach($resourceObj in $resourceObjs){
