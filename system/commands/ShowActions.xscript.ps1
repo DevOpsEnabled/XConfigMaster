@@ -20,14 +20,10 @@ if($WhatIf){
     return $true
 }
 else{
-    $types = $context.GetRootScope().ParameterTypes().Items()
-    foreach($type in $types){
-        if($type.ContentType() -eq "ScriptFile"){
-            $context.Display("{white}$($type.Name()){gray} - $($type.Content())")
-        }
-        else{
-            $context.Display("{white}$($type.Name()){gray} ")
-        }
+    $action.CurrentScope().ParentScope().LoadChildren()
+    $actions = $action.CurrentScope().ParentScope().Actions().Items()
+    foreach($action in $actions){
+        $context.Display("{white}$($action.Name()){gray}")
     }
 
 }

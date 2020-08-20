@@ -17,10 +17,6 @@
 	<!-- *        both "Name"* and "Ref")                                     * -->
 	<!-- ********************************************************************** -->
 	<XConfigMaster.PreLoad>
-		<Parameter Name="NugetExePath" Type="String">
-			<InputStrategy Type="OutputVariable" VariableName="NugetExePath"/>
-		</Parameter>
-        <Action Name=":x" Type="ActionCollection" Ref=":x"/>
 	</XConfigMaster.PreLoad>
 	<!-- ********************************************************************** -->
 	<!-- *                              L O A D                               * -->
@@ -30,27 +26,39 @@
 	<!--          (Elements with only "Ref" attribute)                        * -->
 	<!-- ********************************************************************** -->
 	<XConfigMaster.Load>
-        <PipelineVariable Name="file.name" DefaultValue="devops"/>
+		<Template Ref=":examples">
+            <Action Name="azure-devops" Type="ActionGroup">
+				<PipelineVariable Name="AzureDevOps.PAT"/>
+				<PipelineVariable Name="AzureDevOps.Project"/>
+				<PipelineVariable Name="AzureDevOps.Instance"/>
+				<PipelineVariable Name="System.BuildId"/>
+				
+				<Action Name="get-build-commit" Type="ActionGroup">
+					<Parameter Name="BuildCommit" DefaultValue="$(@Expression=$(BuildPayload).sourceVersion)"/>
+					<Parameter Name="BuildBranch" DefaultValue="$(@Expression=$(BuildPayload).sourceBranch)"/>
+					<Parameter Name="BuildDefinitionId" DefaultValue="$(@Expression=$(BuildPayload).definition.id)"/>
+					<Parameter Name="BuildId" DefaultValue="$(@Expression=$(BuildPayload).id)"/>
+					<Parameter Name="BuildPayload" Type="Object">
+						<InputStrategy Type="OutputVariable" VariableName="BuildPayload"/>
+					</Parameter>
 
-        <Action Ref=":x" SkipValidate="true">
-			<Action Name="help" Type="ShowActions" SkipValidate="true"/>
-            <Action Name="actiontypes" Type="ShowActionTypes" SkipValidate="true"/>
-			<Action Name="inputtypes" Type="ShowInputTypes"  SkipValidate="true"/>
-			<Action Name="extensiontypes" Type="ShowExtensionTypes"  SkipValidate="true"/>
-			<Action Name="parametertypes" Type="ShowParameterTypes"  SkipValidate="true"/>
-            <Action Name="create" Type="Script" SkipClean="true">
-                <Parameter Name="ScriptType" Value="Inline"/>
-                <Parameter Name="ScriptBlock">
-                    copy "$(xmodule.folders.files)/template.xconfigmaster" ([System.IO.Path]::Combine((Get-Location) , "./$(file.name).xconfigmaster"))
-                </Parameter>
+					<Action Name="rest-call" Type="AzureDevOps">
+						<Parameter Name="PAT" Value="$(AzureDevOps.PAT)"/>
+						<Parameter Name="Method" Value="Get"/>
+						<Parameter Name="Instance" Value="$(AzureDevOps.Instance)"/>
+						<Parameter Name="Project" Value="$(AzureDevOps.Project)"/>
+						<Parameter Name="Area" Value="build"/>
+						<Parameter Name="Resource" Value="builds"/>
+						<Parameter Name="RouteParameters" Value="$(System.BuildId)"/>
+						<Parameter Name="OutputVariable" Value="BuildPayload"/>
+					</Action>
 
-                <Action Name="help" Type="Print">
-                    <Parameter Name="Content">
-                        xcm :x create [-file-name {File Name}]
-                    </Parameter>
-                </Action>
-            </Action>
-        </Action>
+					<Action Name="print-commit" Type="Print">
+						<Parameter Name="Content" Value="Build {magenta}$(BuildId){gray} was built on commit {magenta}$(BuildCommit){gray} from branch {magenta}$(BuildBranch){gray} and definition {magenta}$(BuildDefinitionId){gray}"/>
+					</Action>
+				</Action>
+			</Action>
+		</Template>
 	</XConfigMaster.Load>
 	<!-- ********************************************************************** -->
 	<!-- *                          P O S T   L O A D                         * -->
@@ -59,6 +67,5 @@
 	<!--          ImportTemplate logic to consume any defined work in step #3 * -->
 	<!-- ********************************************************************** -->
 	<XConfigMaster.PostLoad>
-        
 	</XConfigMaster.PostLoad>
 </XConfigMaster>

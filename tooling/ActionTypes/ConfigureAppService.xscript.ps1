@@ -13,7 +13,7 @@
 		Param([ConfigAutomationContext] $context,[UIAction] $action)
 		
 		# Extract Required Fields
-		$extracted = $this.Parameters().Extract(@("AppServiceName", "AppendAppSettings"))
+		$extracted = $action.Parameters().Extract(@("AppServiceName", "AppendAppSettings"))
 		
 		# Variables
 		$AppServiceName    = $extracted.AppServiceName
@@ -175,12 +175,12 @@
 	{
 		Param([ConfigAutomationContext] $context,[UIAction] $action)
 
-		if(-not $this.Parameters().Validate(@("AppServiceName", "AppendAppSettings"))){
+		if(-not $action.Parameters().Validate(@("AppServiceName", "AppendAppSettings"))){
 			return $false
 		}
 		
 		# Extract Required Fields
-		$extracted = $this.Parameters().Extract(@("AppServiceName", "AppendAppSettings"))
+		$extracted = $action.Parameters().Extract(@("AppServiceName", "AppendAppSettings"))
 		
 		# Variables
 		$AppServiceName    = $extracted.AppServiceName
