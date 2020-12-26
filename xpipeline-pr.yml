@@ -9,12 +9,25 @@ pr:
 
 variables:
   - template: xpipeline-template-variables.yml
-  
+  - name: XConfigMaster.Prerelease
+    value: "Prerelease = 'prerelease'"
 jobs:
   - template: xpipeline-template-base.yml
     parameters:
       prePublishSteps: 
         - powershell: |
+            $stableVersion = (Find-Module XConfigMaster -AllowPrerelease:$true -MinimumVersion $(XConfigMaster.Major).$(XConfigMaster.Minor).0 -ErrorAction Ignore).Version
+            if($stableVersion){
+              $revision = $stableVersion -replace "(\d+.\d+.\d+.)(\d+)",'$2'
+              $revision = [Int]::Parse($revision)
+              $base = $stableVersion -replace "(\d+.\d+.\d+.)(\d+)",'$1'
+              $revision += 1
+              $newVersion = $base + $revision
+            }
+            else{
+              $newVersion = "$(XConfigMaster.Major).$(XConfigMaster.Minor).0.0"
+            }
+
             $stableVersion = (Find-Module XConfigMaster -AllowPrerelease:$false).Version
             $revision = $stableVersion -replace "(\d+.\d+.\d+.)(\d+)",'$2'
             $revision = [Int]::Parse($revision)
