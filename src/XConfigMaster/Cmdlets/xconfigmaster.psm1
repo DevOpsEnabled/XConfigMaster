@@ -357,7 +357,7 @@ function Expand-AsHtml() {
 	$final = "<div><span style='color:black'>"
     $text.Split( [char]"{", [char]"}" ) | ForEach-Object { $i = 0; } {
         if ($i % 2 -eq 0) {
-            Write-Host $_ -NoNewline;
+			$final += $_
         } else {
             if ($_ -in [enum]::GetNames("ConsoleColor")) {
 				$final += "<span style='color:$($_)'>"
@@ -6960,7 +6960,7 @@ class ConfigAutomationContext{
 		if($context.Children.Count -eq 0){
 			return ""
 		}
-		
+
 		$html = ""
 		$html += "<div class='item'>`r`n"
 		$html += "  <div class='title'>$($context.id)</div>`r`n"
