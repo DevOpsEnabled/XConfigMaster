@@ -6957,6 +6957,10 @@ class ConfigAutomationContext{
 		[System.IO.File]::WriteAllText($filePath, $html)
 	}
 	[string] OutputAsHtml([object] $context){
+		if($context.Children.Count -eq 0){
+			return ""
+		}
+		
 		$html = ""
 		$html += "<div class='item'>`r`n"
 		$html += "  <div class='title'>$($context.id)</div>`r`n"
