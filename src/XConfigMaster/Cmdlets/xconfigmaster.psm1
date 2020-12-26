@@ -338,6 +338,43 @@ function Write-Color() {
     $host.UI.RawUI.ForegroundColor = $startColor;
 }
 Export-ModuleMember -Function Write-Color
+function Expand-AsHtml() {
+    Param (
+        [string] $text = $(Write-Error "You must specify some text"),
+        [switch] $NoNewLine = $false
+    )
+	
+    
+	# $regex = ([regex]'(.+?)(?:\{(red|cyan|green|blue|magenta)\}|$)(.*)')
+	# while(-not ([String]::IsNullOrEmpty($text))){
+		# $before = $regex.Replace($text,'$1')
+		# $color  = $regex.Replace($text,'$2')
+		# $after  = $regex.Replace($text,'$3')
+		 # if ($_ -in [enum]::GetNames("ConsoleColor")) {
+			# $host.UI.RawUI.ForegroundColor = ($_ -as [System.ConsoleColor]);
+		# }
+	# }
+	$final = "<div><span style='color:black'>"
+    $text.Split( [char]"{", [char]"}" ) | ForEach-Object { $i = 0; } {
+        if ($i % 2 -eq 0) {
+            Write-Host $_ -NoNewline;
+        } else {
+            if ($_ -in [enum]::GetNames("ConsoleColor")) {
+				$final += "<span style='color:$($_)'>"
+            }
+			else{
+				$final += $_
+				$final += "</span>"
+				 
+			}
+        }
+
+        $i++;
+    }
+	$final += "</span></div>"
+    return $final
+}
+Export-ModuleMember -Function Expand-AsHtml
 class Helper{
 
 	static [System.Xml.XmlElement] CloneWithParents([System.Xml.XmlElement[]] $elements){
@@ -4016,7 +4053,7 @@ class UIAction : UIInputScope{
 			$activeCollectionProperties = $($activeCollection.Properties)
 		}
 		
-		
+		$this.Context().StartLoggingContext("$($this.Name())")
 		$this.Context().PushActionLevel()
 		
 		if($activeCollectionProperties["ScopeType"] -ieq "Parent"){
@@ -4034,13 +4071,17 @@ class UIAction : UIInputScope{
 		}
 		
 		$this.LoadChildren()
-		
+
+		$this.Context().StartLoggingContext("can-perform")
 		$canRun = $this.CanPerform(([ref]$shortMessage))
-		
+		$this.Context().EndLoggingContext()
+
 		# Check for Conditions for running...
 		if($canRun){
+			$this.Context().StartLoggingContext("pre-actions")
 			$isValid = $this.Get("PreActions").Perform($scriptAction, $actionName, $isRootLevel) -and $isValid
 			$this.LoadChildren()
+			$this.Context().EndLoggingContext()
 		}
 		# $this.Context().DisableLog()
 		
@@ -4072,14 +4113,20 @@ class UIAction : UIInputScope{
 		
 		if($canRun)
 		{
+			$this.Context().StartLoggingContext("post-actions")
 			$isValid = $this.Get("PostActions").Perform($scriptAction, $actionName, $isRootLevel) -and $isValid
+			$this.Context().EndLoggingContext()
+
 			$this._actionsAlreadyPerformed[$actionName] = $isValid
 			$this._localVariables.Remove("PerformingAction")
+			$this.Context().EndLoggingContext()
 			return $isValid
 		}
 		
 		$this._actionsAlreadyPerformed[$actionName] = $isValid
 		$this._localVariables.Remove("PerformingAction")
+		$this.Context().EndLoggingContext()
+
 		return $isValid
 	}
     [UIActionTypeReference] ActionType(){
@@ -6226,6 +6273,11 @@ class ConfigAutomationContext{
 	[hashtable]                $_refs
 	[bool]                     $_fullParsing = $false
 	[bool]                     $_saveXmlEnabled = $true
+
+	[System.Collections.Stack] $_currentLoggingContextStack
+	[object]       			   $_currentLoggingContext
+	[object]       			   $_rootLoggingContext
+	
 	[System.Collections.ArrayList] $_errors
 	[System.Collections.ArrayList] $_filesVisited 	
 	[System.Collections.ArrayList] $_azureRmResources
@@ -6263,6 +6315,9 @@ class ConfigAutomationContext{
 		$this._refs                       = new-object hashtable
 		$this._parameterizingEnabledStack = New-Object System.Collections.Stack
 		$this._azureRmResources           = new-object System.Collections.ArrayList
+		$this._currentLoggingContext      = [PSCustomObject]@{id = 'init'; Children = $(new-object System.Collections.ArrayList)}
+		$this._currentLoggingContextStack = New-Object System.Collections.Stack
+		$this._rootLoggingContext         = $this._currentLoggingContext
 		$this.StartSession()
 
     }
@@ -6302,6 +6357,23 @@ class ConfigAutomationContext{
 		}
 		# $this.Display("Checking Exit Request - $($measure.TotalMilliseconds)")
 		return $this._exitRequested
+	}
+	[object] CurrentLoggingContext(){
+		return $this._currentLoggingContext
+	}
+	[void] StartLoggingContext([string] $id){
+		$this.PushLoggingContext([PSCustomObject]@{id = $id; Children = $(new-object System.Collections.ArrayList)})
+	}
+	[void] EndLoggingContext(){
+		$this.PopLoggingContext()
+	}
+	[void] PushLoggingContext([object] $context){
+		$this.CurrentLoggingContext().Children.Add([PSCustomObject]@{Type = 'Child'; Value = $context})
+		$this._currentLoggingContext = $context
+		$this._currentLoggingContextStack.Push($this._currentLoggingContext)
+	}
+	[void] PopLoggingContext(){
+		$this._currentLoggingContext = $this._currentLoggingContextStack.Pop()
 	}
 	[void] ExitRequested([string] $exitRequested){
 		 $this._exitRequested = $exitRequested
@@ -6644,6 +6716,7 @@ class ConfigAutomationContext{
 				$this._logLock = $false
 				return;
 			}
+			$this.CurrentLoggingContext().Children.Add([PSCustomObject]@{Type = 'Log'; Value = $backup})
 			Write-Color $backup
 		}	
 		$this._logLock = $false
@@ -6834,33 +6907,41 @@ class ConfigAutomationContext{
 		if($actialAction.ParentScope()){
 			$parentText = "{gray}{white}" + $actialAction.ParentScope().FullName("{gray} > {white}") + "{gray}"
 		}
+		$this.Context().StartLoggingContext("Start")
 		$this.Display("$($parentText) > {white}{magenta}$($actialAction.Name()){white}{gray}")
 		
 		$success = $true
 		if(-not $actialAction.TestProperty("SkipValidate", "true", $true))
 		{
+			$this.Context().StartLoggingContext("Validate")
 			$this.Title("`r`n Validating `r`n")
 			[HasContext]::Prefix += "  "
 			$success = $actialAction.Validate()
 			[HasContext]::Prefix = [HasContext]::Prefix.Substring(2)
+			$this.Context().EndLoggingContext()
 		}
 		
 		if(-not $actialAction.TestProperty("SkipClean", "true", $true) -and -not $actialAction.TestProperty("SkipValidate", "true", $true))
 		{
+			$this.Context().StartLoggingContext("Cleaning")
 			$this.Title("`r`n Cleaning `r`n")
 			[HasContext]::Prefix += "  "
 			$success = $actialAction.Clean()
 			[HasContext]::Prefix = [HasContext]::Prefix.Substring(2)
+			$this.Context().EndLoggingContext()
 		}
 		
 		if($success -and -not $actialAction.TestProperty("SkipExecute", "true", $true))
 		{
+			$this.Context().StartLoggingContext("Executing")
 			$this.Title("`r`n Executing `r`n")
 			[HasContext]::Prefix += "  "
 			$success = $actialAction.ExecuteAction()
 			[HasContext]::Prefix = [HasContext]::Prefix.Substring(2)
+			$this.Context().EndLoggingContext()
 		}
-		
+		$this.Context().EndLoggingContext()
+
 		if(-not $success){
 			$actialAction.PrintParameterBreakdown()
 			$this.Display("`r`n{red}:: {red}F a i l e d {red}::{gray}`r`n")
@@ -6869,7 +6950,28 @@ class ConfigAutomationContext{
 			$actialAction.PrintParameterBreakdown()
 			$this.Display("`r`n{green}:: {green}S u c c e s s {green}::{gray}`r`n")
 		}
-		
+	}
+	[void] WriteHtmlLog([string] $filePath){
+		$root = $this._rootLoggingContext
+		$html = $this.OutputAsHtml($root)
+		[System.IO.File]::WriteAllText($filePath, $html)
+	}
+	[string] OutputAsHtml([object] $context){
+		$html = ""
+		$html += "<div class='item'>`r`n"
+		$html += "  <div class='title'>$($context.id)</div>`r`n"
+		$html += "  <div class='children'>`r`n"
+		foreach($child in $context.Children){
+			if($child.Type -eq "Log"){
+				$html += Expand-AsHtml $($child.Value)
+			}
+			elseif($child.Type -eq "Child"){
+				$html += $this.OutputAsHtml($($child.Value))
+			}
+		}
+		$html += "  </div>`r`n"
+		$html += "</div>`r`n"
+		return $html
 	}
 	[array] ResolveAction([string[]] $txtActions, [bool] $expected){
 		if($this.arguments["Execution:LogGroups"]){
@@ -7160,6 +7262,7 @@ class ConfigAutomationContext{
 	}
 	
     [void] PopulateFromXScriptsInFolder([String] $folder, [int] $maxDepth){
+		$this.Context().StartLoggingContext("Load Xscript(s)")
 		$xscriptFiles = Get-ChildItem -Path $folder -Filter "*.xscript.ps1" -Recurse -Depth 5 | Where {[System.IO.File]::Exists($_.FullName)} | Foreach {$_.FullName}
 		$this.Title("XScripts Files")
 		$this._logLock = $true
@@ -7171,11 +7274,12 @@ class ConfigAutomationContext{
 			# Write-Color "";
 		}
 		$this._logLock = $false
+		$this.Context().EndLoggingContext()
 		
 	}
     [void] PopulateFromFolder([String] $folder, [int] $maxDepth){
 		
-		
+		$this.Context().StartLoggingContext("Load XConfigMaster Files")
 		$files = Get-ChildItem -Path $folder -Filter "*.xconfigmaster" -Recurse -Depth $maxDepth | Where {[System.IO.File]::Exists($_.FullName)} | Foreach {$_.FullName}
 		$xmls  = $files | Foreach {@{Xml = ([XML](Get-Content $_ -Raw)); File = $_; Used = "Yes"}}
 		
@@ -7247,7 +7351,7 @@ class ConfigAutomationContext{
 			Write-Color "";
 		}
 
-
+		$this.Context().EndLoggingContext()
 		
 
     }
@@ -7489,6 +7593,10 @@ Function Start-XConfigMaster{
 			}
 		}
 
+		$parseFolder = [System.IO.Path]::Combine($rootpath, ".\")
+		$toolingFolder = [System.IO.Path]::Combine($PSScriptRoot,"..\")
+		$htmlOutputFile = [System.IO.Path]::Combine($rootpath, ".\xlog.html")
+
 		#######################################################################
 		#######################################################################
 		#######################################################################
@@ -7496,10 +7604,10 @@ Function Start-XConfigMaster{
 			$Global:automationContext = New-ConfigAutomationContext
 			$Global:automationContext.PopulateFromArguments($parameters)
 			
-			$parseFolder = [System.IO.Path]::Combine($rootpath, ".\")
+			
 			# Read in Settings
 			Write-Host "Reading in Settings..." 
-			$toolingFolder = [System.IO.Path]::Combine($PSScriptRoot,"..\")
+			
 			
 			$Global:automationContext.PopulateFromXScriptsInFolder($toolingFolder, 12)
 			$Global:automationContext.PopulateFromXScriptsInFolder($parseFolder, 12)
@@ -7519,7 +7627,7 @@ Function Start-XConfigMaster{
 			Write-Host "Parsing Passed!`r`n" -ForegroundColor Green
 			
 			$Global:automationContext.ExecuteActionsFromArguments($actions)
-			
+			$Global:automationContext.WriteHtmlLog($htmlOutputFile)
 			if($Global:automationContext.IsValid()){
 				Write-Host "Execution Passed!`r`n" -ForegroundColor Green
 			}
@@ -7528,6 +7636,7 @@ Function Start-XConfigMaster{
 			}
 		}
 		else {
+			$Global:automationContext.WriteHtmlLog($htmlOutputFile)
 			throw "Parsing Failed`r`n"
 		}
 	}
