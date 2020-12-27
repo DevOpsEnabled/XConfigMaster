@@ -52,7 +52,7 @@ return @{
     {
         Param([ConfigAutomationContext] $context, [UILogger]$logger, [string] $log)
         
-        Write-Color "$($logger.Indention)$log"
+        Write-Color "$log"
     };
     Indent = 
     {

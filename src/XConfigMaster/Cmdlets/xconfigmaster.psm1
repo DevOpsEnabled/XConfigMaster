@@ -5783,8 +5783,10 @@ class UIParameterTypeDefinition: UITypeDefinition {
 class UILoggingTypeDefinitionCollection: HasCollectionContext {
 
 	UILoggingTypeDefinitionCollection([ConfigAutomationContext] $context) : base($context, "Logging Types"){
+		$this.Hierarchical($false)
     }
     UILoggingTypeDefinitionCollection([ConfigAutomationContext] $context, [UIInputScopeBase] $scope) : base($context, $scope,"Logging Types"){
+		$this.Hierarchical($false)
     }
     [void] PopulateFromXML([System.Xml.XmlElement] $xml){
         foreach($roots in $xml.ChildNodes) 
@@ -6867,7 +6869,7 @@ class ConfigAutomationContext{
 		try{
 		# if($this.arguments["LogGroups"] -eq $grouping -or $this.arguments["LogGroups"] -eq "All"){
 			[HasContext]::Prefix += "  "
-			$this.rootScope.Indent(1)
+			# $this.rootScope.Indent(1)
 		# }
 		}
 		catch{
@@ -6880,7 +6882,7 @@ class ConfigAutomationContext{
 		try{
 			# if($this.arguments["LogGroups"] -eq $grouping -or $this.arguments["LogGroups"] -eq "All"){
 				[HasContext]::Prefix = [HasContext]::Prefix.Substring(2)
-				$this.rootScope.Indent(-1)
+				# $this.rootScope.Indent(-1)
 			# }
 		}
 		catch{
