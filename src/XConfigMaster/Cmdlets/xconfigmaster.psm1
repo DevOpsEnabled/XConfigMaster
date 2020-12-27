@@ -760,9 +760,13 @@ class HasContext{
 					Param( [System.Text.RegularExpressions.Match] $match)
 					
 					$name = $match.Groups[1].Value
+
+					# If we have more variables to resolve inside, then contain them inside of a classic $() to capture the entire expression in the string
 					if($regex.Match($name).Success){
 						return '$(' + $($regex.Replace($name, $replaceBlock2)) + ')'
 					}
+
+					# If we have it, then return it
 					if($variables[$name]){
 						if($inPlanTxt){
 							return $variables[$name]
@@ -778,9 +782,6 @@ class HasContext{
 					
 					$this.PushIndent()
 					$value = $parameter.Value()
-					foreach($transform in $valueTransforms){
-						$value = .$transform $value
-					}
 					$this.PopIndent()
 					
 					if($value -match ('([`'+$variablePrefix+'][(])(' + $name + ')([)])')){
@@ -811,6 +812,8 @@ class HasContext{
 					Param( [System.Text.RegularExpressions.Match] $match)
 
 					$name = $match.Groups[1].Value
+
+					# If the variable name is an expression. We need to resolve the execution of the expression, not the content
 					if($name -match '^\@Expression\=(.*)$'){
 						if($inPlanTxt){
 							return $regex.Replace($Matches[1], $replaceBlock2)
@@ -819,6 +822,7 @@ class HasContext{
 						return Invoke-Expression ($regex.Replace($Matches[1], $replaceBlock2))
 					}
 
+					# If the name of the variable has also variables in it
 					if($regex.Match($name).Success){
 						if($inPlanTxt){
 							return $regex.Replace($name, $replaceBlock)
@@ -826,6 +830,7 @@ class HasContext{
 						return $($regex.Replace($name, $replaceBlock))
 					}	 
 					
+					# If we have already resolve this value, send it
 					if($variables[$name]){
 						if($inPlanTxt){
 							return $variables[$name]
@@ -833,19 +838,23 @@ class HasContext{
 						return $variables[$name]
 					}
 					
+					# Find resolving variable
 					$parameter = $currentScope.Parameters().Get($name, $deepSearch)
 					
+					# Not found. 
 					if(-not $parameter){
 						$this.Error("Parameter {magenta}$($name){gray} came back with null when trying to parameterize '{magenta}$($value){value}'")
 						return "`$(`$variables['$($name)'])"
 					}
 					
+					# Resolve value of parameter. THis is the recursive side of things
 					$this.PushIndent()
 					$value = $parameter.Value()
-					foreach($transform in $valueTransforms){
-						$value = .$transform $value
-					}
 					$this.PopIndent()
+
+					# If the value of the variable is referencing its self...
+					# Meaning, $(VariableName) == "Some Text $(VariableName)"
+					# This will need to reresolve but from the parent scope if its available
 					if($value -match ('([`'+$variablePrefix+'][(])(' + $name + ')([)])')){
 						if(-not  $parameter.CurrentScope().ParentScope()){
 							$this.Error("Found recursive parameter setting '$($foundParameter.ParameterName())' and there is no parent scope to grab from to resolve the recursion")
@@ -859,13 +868,14 @@ class HasContext{
 						}
 					}
 					
+					# Value not found, send back $(name)
 					if(-not $value){
 						return "`$($($name))"
 					}
-					else{
-						$variables[$name] = $value
-						#$this.Display("Adding Variables[{magenta}$($name){gray}] = {magenta}$($value.GetType()){gray}/{magenta}$($value){gray}")
-					}
+
+					# Save it for later use
+					$variables[$name] = $value
+					
 					
 					if($inPlanTxt){
 						return $variables[$name]
@@ -1364,7 +1374,7 @@ class HasContext{
 
 		if($this._xmlDefinitions.Count -gt 0){
 
-			$this.Display("Loading Children [{white}$($this._xmlDefinitions.Count){gray} xmls to load]")
+			# $this.Display("Loading Children [{white}$($this._xmlDefinitions.Count){gray} xmls to load]")
 			$this.PushIndent()
 			foreach($xmlDefinition in $this._xmlDefinitions){
 				# this.Display("Loading XML`r`n$($xmlDefinition.Xml.Outerxml | Format-Xml)`r`n")
@@ -1372,7 +1382,7 @@ class HasContext{
 				$this.Context().PopulateFromXml($xmlDefinition.Xml, $this)
 				$this.Context().PopLocation()
 			}
-			$this.Display("{darkgreen}[{green}Done{darkgreen}]{gray}")
+			# $this.Display("{darkgreen}[{green}Done{darkgreen}]{gray}")
 			$this._xmlDefinitions.Clear()
 			$this.PopIndent()
 		}
@@ -1388,7 +1398,7 @@ class HasContext{
 		
 		if($this._xmlDefinitions.Count -gt 0){
 
-			$this.Display("Loading Children [{white}$($this._xmlDefinitions.Count){gray} xmls to load]")
+			# $this.Display("Loading Children [{white}$($this._xmlDefinitions.Count){gray} xmls to load]")
 			$this.PushIndent()
 			foreach($xmlDefinition in $this._xmlDefinitions){
 				# this.Display("Loading XML`r`n$($xmlDefinition.Xml.Outerxml | Format-Xml)`r`n")
@@ -1396,7 +1406,7 @@ class HasContext{
 				$this.Context().PopulateFromXml($xmlDefinition.Xml, $this)
 				$this.Context().PopLocation()
 			}
-			$this.Display("{darkgreen}[{green}Done{darkgreen}]{gray}")
+			# $this.Display("{darkgreen}[{green}Done{darkgreen}]{gray}")
 			$this._xmlDefinitions.Clear()
 			$this.PopIndent()
 		}
@@ -1563,14 +1573,17 @@ class HasCollectionContext: HasConsumableContext{
 	
     HasCollectionContext([ConfigAutomationContext] $_context):base($_context){
 		$this._items = new-object hashtable
+		$this._shallowItems = new-object hashtable
 		
     }
 	HasCollectionContext([ConfigAutomationContext] $_context, [UIInputScopeBase] $scope, [String] $name):base($_context, $scope, $name){
 		$this._items = new-object hashtable
+		$this._shallowItems = new-object hashtable
 		$this._referenceName = $name
     }
     HasCollectionContext([ConfigAutomationContext] $_context, [UIInputScopeBase] $scope, [String] $name, [string] $referenceName):base($_context, $scope, $name){
 		$this._items = new-object hashtable
+		$this._shallowItems = new-object hashtable
 		$this._referenceName = $name
     }
 	[bool] Hierarchical(){
@@ -1586,6 +1599,7 @@ class HasCollectionContext: HasConsumableContext{
 		$this._overridesEnabled = $overridesEnabled
 	}
 	[hashtable] $_items
+	[hashtable] $_shallowItems
 
 	[string] ReferenceName(){
 		return $this._referenceName
@@ -1685,6 +1699,20 @@ class HasCollectionContext: HasConsumableContext{
 				}
 			}
 			
+			if(-not $foundItem){
+				$foundItem = $this._shallowItems[$name.ToLower()]
+
+				# Remove Invalid Items
+				if($foundItem -and ($foundItem.IsInvalid()) -and -not $includeInvalidItems){
+					$foundItem = $null
+				}
+				
+				# Remove Hidden Items
+				if($foundItem -and ($foundItem.IsHidden()) -and -not $includeHiddenItems){
+					$foundItem = $null
+				}
+			}
+
 			if(-not $foundItem) {
 				$foundItem = $this._items[$name.ToLower()]
 				
@@ -1754,6 +1782,11 @@ class HasCollectionContext: HasConsumableContext{
 			if($foundItem){
 				$foundItem.RefreshSessionIfNeeded()
 			}
+			
+			if($foundItem){
+				$this._shallowItems[$name.ToLower()] = $foundItem
+			}
+			
 			return $foundItem
 		}
 		if($this._lock){
