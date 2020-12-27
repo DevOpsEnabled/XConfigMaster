@@ -46,7 +46,7 @@ return @{
     {
         Param([ConfigAutomationContext] $context, [UILogger]$logger)
 
-        [Helper]::SetPropertyIfNotExists($logger, "string", "Indention", "")
+        [Helper]::SetPropertyIfNotExists($logger, "string", "Indention", [HasContext]::Prefix)
     };
     Log = 
     {
@@ -64,7 +64,7 @@ return @{
             $logger.Indention += (@(0..$indention) | Foreach-Object {$indentionChars}) -join ""
         }
         elseif($indention -lt 0){
-            $logger.Indention = $logger.Indention.Substring($indentionSize)
+            $logger.Indention = $logger.Indention.Substring($indentionSize * $indention)
         }
         else{
             throw "Unable to indent by 0"
