@@ -1973,7 +1973,9 @@ class UIInputScopeBase : HasCollectionContext{
 	hidden [UIActionTypeDefinitionCollection]            $_actionTypes
 	
 	hidden [UIParameterCollection]                       $_parameters
-    hidden [UIParameterTypeDefinitionCollection]         $_parameterTypes
+	hidden [UIParameterTypeDefinitionCollection]         $_parameterTypes
+	hidden [UILoggingTypeDefinitionCollection]           $_loggingTypes
+	hidden [UILoggerCollection]                          $_loggers
 	
     # hidden [UIInputCollection]                           $_inputs
     hidden [UIInputScopecollection]                      $_inputScopes
@@ -1997,6 +1999,8 @@ class UIInputScopeBase : HasCollectionContext{
 		Write-Color "{red}Error, {gray}Empty Constructor {white}{gray}of type {white}$($this.GetType().Name){red} came in with null scope{gray}"
 		
 		$this._parameterTypes             = [UIParameterTypeDefinitionCollection]::new($this.Context())
+		$this._loggingTypes               = [UILoggingTypeDefinitionCollection]::new($this.Context())
+		$this._loggers                    = [UILoggerCollection]::new($this.Context())
         # $this._inputs                     = [UIInputCollection]::new($this.Context())
         $this._inputScopes                = [UIInputScopecollection]::new($this.Context())
 		$this._parameters                 = [UIParameterCollection]::new($this.Context())
@@ -2020,6 +2024,8 @@ class UIInputScopeBase : HasCollectionContext{
 		$wasAbleToAdd = $true
 		$wasAbleToAdd =  $this.Add($this._importTemplates) -and $wasAbleToAdd
 		$wasAbleToAdd =  $this.Add($this._parameterTypes) -and $wasAbleToAdd
+		$wasAbleToAdd =  $this.Add($this._loggingTypes) -and $wasAbleToAdd
+		$wasAbleToAdd =  $this.Add($this._loggers) -and $wasAbleToAdd
 		$wasAbleToAdd =  $this.Add($this._inputScopes) -and $wasAbleToAdd
 		$wasAbleToAdd =  $this.Add($this._parameters) -and $wasAbleToAdd
 		$wasAbleToAdd =  $this.Add($this._resourceTypes) -and $wasAbleToAdd
@@ -2049,7 +2055,9 @@ class UIInputScopeBase : HasCollectionContext{
 		}
 		$this._parentScope = $parentScope
 
-        $this._parameterTypes             = [UIParameterTypeDefinitionCollection]::new($this.Context(), $this)
+		$this._parameterTypes             = [UIParameterTypeDefinitionCollection]::new($this.Context(), $this)
+		$this._loggingTypes               = [UILoggingTypeDefinitionCollection]::new($this.Context(), $this)
+		$this._loggers                    = [UILoggerCollection]::new($this.Context(), $this)
         # $this._inputs                     = [UIInputCollection]::new($this.Context(), $this)
         $this._inputScopes                = [UIInputScopecollection]::new($this.Context(), $this)
 		$this._parameters                 = [UIParameterCollection]::new($this.Context(), $this)
@@ -2073,6 +2081,8 @@ class UIInputScopeBase : HasCollectionContext{
 		$wasAbleToAdd = $true
 		$wasAbleToAdd =  $this.Add($this._importTemplates) -and $wasAbleToAdd
 		$wasAbleToAdd =  $this.Add($this._parameterTypes) -and $wasAbleToAdd
+		$wasAbleToAdd =  $this.Add($this._loggingTypes) -and $wasAbleToAdd
+		$wasAbleToAdd =  $this.Add($this._loggers) -and $wasAbleToAdd
 		$wasAbleToAdd =  $this.Add($this._inputScopes) -and $wasAbleToAdd
 		$wasAbleToAdd =  $this.Add($this._parameters) -and $wasAbleToAdd
 		$wasAbleToAdd =  $this.Add($this._resourceTypes) -and $wasAbleToAdd
@@ -2095,6 +2105,15 @@ class UIInputScopeBase : HasCollectionContext{
 			$this.Error("Unable to add some of the items")
 		}
 		
+	}
+	[void] Milestone([string] $message, [string] $type){
+		$this.Loggers().Milestone($message, $type)
+    }
+	[void] Log([string] $message){
+		$this.Loggers().Log($message)
+    }
+    [void] Indent([int] $amount){
+		$this.Loggers().Indent($amount)
     }
 	[UIInputScopeBase] CurrentScope(){
         return $this._currentScope
@@ -2277,7 +2296,10 @@ class UIInputScopeBase : HasCollectionContext{
     }
     # [UIInputCollection] Inputs(){
     #     return $this._inputs
-    # }
+	# }
+	[UILoggingTypeDefinitionCollection] LoggingTypes(){
+        return $this._loggingTypes
+    }
 	[UIConfigMasterExtensionTypeCollection] ExtensionTypes(){
         return $this._configMasterExtensionTypes
     }
@@ -2301,6 +2323,9 @@ class UIInputScopeBase : HasCollectionContext{
     }
 	[UIActionCollection] Actions(){
         return $this._actions
+	}
+	[UILoggerCollection] Loggers(){
+        return $this._loggers
     }
 	[UIPreActionCollection] PreActions(){
         return $this._preActions
@@ -5751,6 +5776,176 @@ class UIParameterTypeDefinition: UITypeDefinition {
 		return $this.ParameterTypeName()
 	}
 }
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - -UILoggingTypeDefinitionCollection Collection - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+class UILoggingTypeDefinitionCollection: HasCollectionContext {
+
+	UILoggingTypeDefinitionCollection([ConfigAutomationContext] $context) : base($context, "Logging Types"){
+    }
+    UILoggingTypeDefinitionCollection([ConfigAutomationContext] $context, [UIInputScopeBase] $scope) : base($context, $scope,"Logging Types"){
+    }
+    [void] PopulateFromXML([System.Xml.XmlElement] $xml){
+        foreach($roots in $xml.ChildNodes) 
+        {
+            if($roots.LocalName -eq "LoggingTypes") 
+            {
+                foreach($step in $roots.ChildNodes)
+                {
+                    if($step.LocalName -eq "LoggingType") {
+                        $this._loggingTypes.Add([UILoggingTypeDefinition]::FromXML($this.Context(), $step))
+                    }
+                }
+            }
+        }
+        
+    }
+}
+
+class UILoggingTypeDefinition: UITypeDefinition {
+	hidden [UIParameterCollection] $_parameters
+	
+	UILoggingTypeDefinition([ConfigAutomationContext] $_context) : base($_context){
+		$this._parameters     = [UIParameterCollection]::new($_context, $_context.CurrentScope())
+    }
+    UILoggingTypeDefinition([ConfigAutomationContext] $_context, [String] $name, [string] $contentType, [String] $content, [UIInputScopeBase] $scope) : base($_context, $name, $contentType, $content, "Logging Type", $scope){
+		$this._parameters     = [UIParameterCollection]::new($_context, $_context.CurrentScope())
+	}
+	[UIParameterCollection] Parameters(){
+		return $this._parameters
+	}
+	[void] Init([UILogger] $logger){
+		$this.InvokeCallback("Init", @($($this.Context()), $logger), $false)
+    }
+	[void] Milestone([string] $message, [string] $type, [UILogger] $logger){
+		$this.InvokeCallback("Milestone", @($($this.Context()), $logger, $message, $type), $false)
+    }
+	[void] Log([string] $message, [UILogger] $logger){
+		$this.InvokeCallback("Log", @($($this.Context()), $logger, $message), $false)
+    }
+    [void] Indent([int] $amount, [UILogger] $logger){
+		$this.InvokeCallback("Indent", @($($this.Context()), $logger, $amount), $false)
+    }
+    [string] LoggingTypeName(){
+        return $this.Name()
+    }
+    static [UILoggingTypeDefinition] FromXML([ConfigAutomationContext] $_context, [System.Xml.XmlElement] $element, [UIInputScopeBase] $scope){
+        return [UITypeDefinition]::FromXml($_context, $element, [UILoggingTypeDefinition], $scope)
+    }
+	[String] ToString(){
+		return $this.LoggingTypeName()
+	}
+}
+class UILoggingTypeReference : HasContext {
+
+    hidden [String] $_typeName
+    UILoggingTypeReference([ConfigAutomationContext] $_context) : base($_context) {
+    }
+    UILoggingTypeReference([ConfigAutomationContext] $_context, [String] $name) : base($_context) {
+        $this._typeName = $name
+    }
+	UILoggingTypeReference([ConfigAutomationContext] $_context, [UIInputScopeBase] $scope, [String] $name) : base($_context,$scope, "NOT_SET") {
+        $this._typeName = $name
+    }
+    [string] LoggingTypeName(){
+        return $this._typeName
+    }
+
+    [UILoggingTypeDefinition] Definition(){
+        # Write-Host "Referencing UI Extension Type '$($this.ExtensionTypeName())'"
+		
+        return $this.CurrentScope().LoggingTypes().Get($this.LoggingTypeName())
+    }
+	[String] ToString(){
+		return $this.LoggingTypeName()
+	}
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - -UILoggerCollection Collection - - - - - - - - - - - - - - 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+class UILoggerCollection : HasCollectionContext {
+
+	UILoggerCollection([ConfigAutomationContext] $context) :base($context, "Loggers"){
+    }
+    UILoggerCollection([ConfigAutomationContext] $context, [UIInputScopeBase] $scope) :base($context, $scope, "Loggers"){
+    }
+    [void] Milestone([string] $message, [string] $type){
+		foreach($logger in $this.Items()){
+			$logger.Milestone($message, $type)
+		}
+    }
+	[void] Log([string] $message){
+		foreach($logger in $this.Items()){
+			$logger.Log($message)
+		}
+    }
+    [void] Indent([int] $amount){
+		foreach($logger in $this.Items()){
+			$logger.Indent($amount)
+		}
+    }
+	static [object] Requirements(){
+		return [PSCustomObject]@{
+			ParentElementNames =@("Loggers");
+			ChildElementNames = @("Logger");
+			ChildType = [UILogger]
+		}
+	}
+	
+}
+class UILogger : HasContext{
+
+    hidden [UILoggingTypeReference] $_type
+	UILogger([ConfigAutomationContext] $_context) : base($_context){
+    }
+    UILogger([ConfigAutomationContext] $_context, [UIInputScopeBase] $parent, [String] $name) : base($_context, $parent, $name){
+    }
+
+    [UILoggingTypeReference] LoggingType(){
+        return $this._type
+    }
+	[String] ToString() {
+		return "$($this.Name()) $($this.LoggingType().ToString())"
+	}
+	[void] Milestone([string] $message, [string] $type){
+		$this.LoggingType().Definition().Milestone($message, $type, $this)
+    }
+	[void] Log([string] $message){
+		$this.LoggingType().Definition().Log($message, $this)
+    }
+    [void] Indent([int] $amount){
+		$this.LoggingType().Definition().Indent($amount, $this)
+    }
+	[bool] UpdateProps([hashtable] $props, [string] $body, [System.Xml.XmlElement] $element, [string] $location){
+		if(-not (([HasContext]$this).UpdateProps($props, $body, $element, $location))){
+			return $false
+		}
+		
+		return $true
+	}
+	[bool] InitialProps([hashtable] $props, [string] $body, [System.Xml.XmlElement] $element, [string] $location){
+		if(-not (([HasContext]$this).InitialProps($props, $body, $element, $location))){
+			return $false
+		}
+		
+		if(-not ($element.GetAttribute("Type"))){
+            $this.Error("Not all the attributes to build the parameter element were found:`r`n  Name:$($element.GetAttribute("Name"))`r`n  Type:$($element.GetAttribute("Type")) `r`n   XPath:$($element.GetAttribute("XPath"))")
+			return $false
+        }
+
+		$this._type  =  [UILoggingTypeReference]::new($this.Context(), $this.CurrentScope(), $element.GetAttribute("Type"))
+		$this.LoggingType().Definition().Init($this)
+		return $true
+	}
+	
+	static [object] Requirements(){
+		return [PSCustomObject]@{
+			ElementNames = @("Logger");
+			PrimaryKey = "Name"
+		}
+	}
+}
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # - - - - - - - - - - - - -UIResources Collection - - - - - - - - - - - - - - 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -6652,6 +6847,7 @@ class ConfigAutomationContext{
 		try{
 		# if($this.arguments["LogGroups"] -eq $grouping -or $this.arguments["LogGroups"] -eq "All"){
 			[HasContext]::Prefix += "  "
+			$this.rootScope.Indent(1)
 		# }
 		}
 		catch{
@@ -6664,6 +6860,7 @@ class ConfigAutomationContext{
 		try{
 			# if($this.arguments["LogGroups"] -eq $grouping -or $this.arguments["LogGroups"] -eq "All"){
 				[HasContext]::Prefix = [HasContext]::Prefix.Substring(2)
+				$this.rootScope.Indent(-1)
 			# }
 		}
 		catch{
@@ -6716,8 +6913,9 @@ class ConfigAutomationContext{
 				$this._logLock = $false
 				return;
 			}
+			$this.rootScope.Log($backup)
 			$this.CurrentLoggingContext().Children.Add([PSCustomObject]@{Type = 'Log'; Value = $backup})
-			Write-Color $backup
+			# Write-Color $backup
 		}	
 		$this._logLock = $false
 	}
@@ -7244,7 +7442,10 @@ class ConfigAutomationContext{
 		elseif($heading.Type -eq "ExtensionType"){
 			$type = [UIConfigMasterExtensionType]::new($this.Context(), $name, "ScriptFile", $file, $this.CurrentScope())
 			$collection = $this.CurrentScope().ExtensionTypes()
-
+		}
+		elseif($heading.Type -eq "LoggingType"){
+			$type = [UILoggingTypeDefinition]::new($this.Context(), $name, "ScriptFile", $file, $this.CurrentScope())
+			$collection = $this.CurrentScope().LoggingTypes()
 		}
 		else{
 			$this.Error("Unknown heading type '{white}$($heading.Type){gray} found in XScript '{white}$file{gray}'. `r`n"+ `
