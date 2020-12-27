@@ -6369,8 +6369,8 @@ class ConfigAutomationContext{
 	}
 	[void] PushLoggingContext([object] $context){
 		$this.CurrentLoggingContext().Children.Add([PSCustomObject]@{Type = 'Child'; Value = $context})
-		$this._currentLoggingContext = $context
 		$this._currentLoggingContextStack.Push($this._currentLoggingContext)
+		$this._currentLoggingContext = $context
 	}
 	[void] PopLoggingContext(){
 		$this._currentLoggingContext = $this._currentLoggingContextStack.Pop()
