@@ -5794,7 +5794,9 @@ class UILoggingTypeDefinitionCollection: HasCollectionContext {
                 foreach($step in $roots.ChildNodes)
                 {
                     if($step.LocalName -eq "LoggingType") {
-                        $this._loggingTypes.Add([UILoggingTypeDefinition]::FromXML($this.Context(), $step))
+                        if(-not ($this.Add([UILoggingTypeDefinition]::FromXML($this.Context(), $step, $this.CurrentScope())))){
+							$this.Error("Failed to add logging type from xml snippet:`r`n$($step.Outerxml)")
+						}
                     }
                 }
             }
@@ -5855,7 +5857,7 @@ class UILoggingTypeReference : HasContext {
     [UILoggingTypeDefinition] Definition(){
         # Write-Host "Referencing UI Extension Type '$($this.ExtensionTypeName())'"
 		
-        return $this.CurrentScope().LoggingTypes().Get($this.LoggingTypeName())
+        return $this.Context().LoggingTypes().Get($this.LoggingTypeName())
     }
 	[String] ToString(){
 		return $this.LoggingTypeName()
@@ -7063,6 +7065,9 @@ class ConfigAutomationContext{
 	[UIInputScopeBase] PreviousScope(){
 		return $this.rootScopes.Peek()
 	}
+	[UILoggingTypeDefinitionCollection] LoggingTypes(){
+        return $this.rootScope.LoggingTypes()
+    }
 	[UIConfigMasterExtensionTypeCollection] ExtensionTypes(){
         return $this.rootScope.ExtensionTypes()
     }
