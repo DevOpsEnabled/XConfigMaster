@@ -52,7 +52,7 @@ return @{
     {
         Param([ConfigAutomationContext] $context, [UILogger]$logger, [string] $log)
         
-        WriteColor "$($logger.Indention)$log"
+        Write-Color "$($logger.Indention)$log"
     };
     Indent = 
     {
@@ -74,6 +74,6 @@ return @{
     {
         Param([ConfigAutomationContext] $context, [UILogger]$logger, [string] $message, [string] $type)
 
-        WriteColor "`r`n$($logger.Indention):: $type - $message ::`r`n"
+        Write-Color "`r`n$($logger.Indention):: $type - $message ::`r`n"
     }
 }
