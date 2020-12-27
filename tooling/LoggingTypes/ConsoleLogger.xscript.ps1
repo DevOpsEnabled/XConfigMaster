@@ -64,7 +64,7 @@ return @{
             $logger.Indention += (@(0..$indention) | Foreach-Object {$indentionChars}) -join ""
         }
         elseif($indention -lt 0){
-            $logger.Indention = $logger.Indention.Substring($indentionSize * $indention)
+            $logger.Indention = $logger.Indention.Substring($indentionSize * ($indention * -1))
         }
         else{
             throw "Unable to indent by 0"
