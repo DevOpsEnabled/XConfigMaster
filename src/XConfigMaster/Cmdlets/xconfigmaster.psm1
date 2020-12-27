@@ -5867,25 +5867,40 @@ class UILoggingTypeReference : HasContext {
 # - - - - - - - - - - - - -UILoggerCollection Collection - - - - - - - - - - - - - - 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class UILoggerCollection : HasCollectionContext {
-
+	hidden [bool] $_skipLogger = $false
 	UILoggerCollection([ConfigAutomationContext] $context) :base($context, "Loggers"){
     }
     UILoggerCollection([ConfigAutomationContext] $context, [UIInputScopeBase] $scope) :base($context, $scope, "Loggers"){
     }
     [void] Milestone([string] $message, [string] $type){
+		if($this._skipLogger){
+			return
+		}
+		$this._skipLogger = $true
 		foreach($logger in $this.Items()){
 			$logger.Milestone($message, $type)
 		}
+		$this._skipLogger = $false
     }
 	[void] Log([string] $message){
+		if($this._skipLogger){
+			return
+		}
+		$this._skipLogger = $true
 		foreach($logger in $this.Items()){
 			$logger.Log($message)
 		}
+		$this._skipLogger = $false
     }
     [void] Indent([int] $amount){
+		if($this._skipLogger){
+			return
+		}
+		$this._skipLogger = $true
 		foreach($logger in $this.Items()){
 			$logger.Indent($amount)
 		}
+		$this._skipLogger = $false
     }
 	static [object] Requirements(){
 		return [PSCustomObject]@{
@@ -5898,7 +5913,8 @@ class UILoggerCollection : HasCollectionContext {
 }
 class UILogger : HasContext{
 
-    hidden [UILoggingTypeReference] $_type
+	hidden [UILoggingTypeReference] $_type
+	
 	UILogger([ConfigAutomationContext] $_context) : base($_context){
     }
     UILogger([ConfigAutomationContext] $_context, [UIInputScopeBase] $parent, [String] $name) : base($_context, $parent, $name){
@@ -5911,9 +5927,11 @@ class UILogger : HasContext{
 		return "$($this.Name()) $($this.LoggingType().ToString())"
 	}
 	[void] Milestone([string] $message, [string] $type){
+		
 		$this.LoggingType().Definition().Milestone($message, $type, $this)
     }
 	[void] Log([string] $message){
+		
 		$this.LoggingType().Definition().Log($message, $this)
     }
     [void] Indent([int] $amount){
