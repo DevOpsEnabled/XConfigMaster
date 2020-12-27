@@ -1786,7 +1786,7 @@ class HasCollectionContext: HasConsumableContext{
 			if($foundItem){
 				$this._shallowItems[$name.ToLower()] = $foundItem
 			}
-			
+
 			return $foundItem
 		}
 		if($this._lock){
@@ -3758,7 +3758,7 @@ class UIInputTypeReferenceCollection : HasContext {
 }
 class UIInputTypeReference : HasContext{
 
-    
+    [UIInputTypeDefinition] $_definition
 	UIInputTypeReference([ConfigAutomationContext] $_context) : base($_context) {
     }
     UIInputTypeReference([ConfigAutomationContext] $_context, [String] $name, [UIInputScopeBase] $scope) : base($_context, $scope, $name) {
@@ -3767,7 +3767,11 @@ class UIInputTypeReference : HasContext{
     [UIInputTypeDefinition] Definition(){
         $this.Context().Log("InputTypes", "Referencing UI Input Type '$($this.Name())'")
 		
-        return $this.Context().InputTypes().Get($this.Name())
+		if($this._definition){
+			return $this._definition
+		}
+		$this._definition = $this.Context().InputTypes().Get($this.Name())
+        return $this._definition
     }
 	[String] ToString(){
 		return $this.Name()
