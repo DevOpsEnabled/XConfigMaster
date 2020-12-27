@@ -16,7 +16,7 @@ jobs:
     parameters:
       prePublishSteps: 
         - powershell: |
-            $stableVersion = (Find-Module XConfigMaster -AllowPrerelease:$true -MinimumVersion $(XConfigMaster.Major).$(XConfigMaster.Minor).0 -ErrorAction Ignore).Version
+            $stableVersion = (Find-Module XConfigMaster -AllowPrerelease:$true -MinimumVersion $(XConfigMaster.Major).$(XConfigMaster.Minor).0-prerelease -ErrorAction Ignore).Version
             if($stableVersion){
               $revision = $stableVersion -replace "(\d+.\d+.)(\d+)(.\d+)",'$2'
               $revision = [Int]::Parse($revision)
