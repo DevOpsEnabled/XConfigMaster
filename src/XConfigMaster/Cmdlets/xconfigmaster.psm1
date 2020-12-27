@@ -5783,10 +5783,8 @@ class UIParameterTypeDefinition: UITypeDefinition {
 class UILoggingTypeDefinitionCollection: HasCollectionContext {
 
 	UILoggingTypeDefinitionCollection([ConfigAutomationContext] $context) : base($context, "Logging Types"){
-		$this.Hierarchical($false)
     }
     UILoggingTypeDefinitionCollection([ConfigAutomationContext] $context, [UIInputScopeBase] $scope) : base($context, $scope,"Logging Types"){
-		$this.Hierarchical($false)
     }
     [void] PopulateFromXML([System.Xml.XmlElement] $xml){
         foreach($roots in $xml.ChildNodes) 
@@ -5882,6 +5880,12 @@ class UILoggerCollection : HasCollectionContext {
 		foreach($logger in $this.Items()){
 			$logger.Milestone($message, $type)
 		}
+		if($this.CurrentScope().Loggers().Id() -ne $this.Id()){
+			$this.CurrentScope().Loggers().Milestone($message, $type)
+		}
+		if($this.CurrentScope().ParentScope()){
+			$this.CurrentScope().ParentScope().Milestone($message, $type)
+		}
 		$this._skipLogger = $false
     }
 	[void] Log([string] $message){
@@ -5892,6 +5896,13 @@ class UILoggerCollection : HasCollectionContext {
 		foreach($logger in $this.Items()){
 			$logger.Log($message)
 		}
+		if($this.CurrentScope().Loggers().Id() -ne $this.Id()){
+			$this.CurrentScope().Loggers().Log($message)
+		}
+		if($this.CurrentScope().ParentScope()){
+			$this.CurrentScope().ParentScope().Log($message)
+		}
+		
 		$this._skipLogger = $false
     }
     [void] Indent([int] $amount){
@@ -5901,6 +5912,12 @@ class UILoggerCollection : HasCollectionContext {
 		$this._skipLogger = $true
 		foreach($logger in $this.Items()){
 			$logger.Indent($amount)
+		}
+		if($this.CurrentScope().Loggers().Id() -ne $this.Id()){
+			$this.CurrentScope().Loggers().Indent($amount)
+		}
+		if($this.CurrentScope().ParentScope()){
+			$this.CurrentScope().ParentScope().Indent($amount)
 		}
 		$this._skipLogger = $false
     }
