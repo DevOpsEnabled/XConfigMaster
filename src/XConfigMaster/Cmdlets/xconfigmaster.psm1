@@ -1361,16 +1361,23 @@ class HasContext{
 		}
 		$this.RefreshSessionIfNeeded()
 		$this.Context().PushLocation($this._generatedFromFile)
+
 		if($this._xmlDefinitions.Count -gt 0){
-			# $this.Display("Loading Children [{white}$($this._xmlDefinitions.Count){gray} xmls to load]")
+
+			$this.Display("Loading Children [{white}$($this._xmlDefinitions.Count){gray} xmls to load]")
+			$this.PushIndent()
+			foreach($xmlDefinition in $this._xmlDefinitions){
+				# this.Display("Loading XML`r`n$($xmlDefinition.Xml.Outerxml | Format-Xml)`r`n")
+				$this.Context().PushLocation($xmlDefinition.Location)
+				$this.Context().PopulateFromXml($xmlDefinition.Xml, $this)
+				$this.Context().PopLocation()
+			}
+			$this.Display("{darkgreen}[{green}Done{darkgreen}]{gray}")
+			$this._xmlDefinitions.Clear()
+			$this.PopIndent()
 		}
-		foreach($xmlDefinition in $this._xmlDefinitions){
-			# this.Display("Loading XML`r`n$($xmlDefinition.Xml.Outerxml | Format-Xml)`r`n")
-			$this.Context().PushLocation($xmlDefinition.Location)
-			$this.Context().PopulateFromXml($xmlDefinition.Xml, $this)
-			$this.Context().PopLocation()
-		}
-		$this._xmlDefinitions.Clear()
+		
+		
 		
 		if(-not [Object]::ReferenceEquals($this, $this.CurrentScope())){
 			$this.CurrentScope().LoadChildren()
@@ -1379,12 +1386,21 @@ class HasContext{
 			$this.CurrentScope().ParentScope().LoadChildren()
 		}
 		
-		foreach($xmlDefinition in $this._xmlDefinitions){
-			$this.Context().PushLocation($xmlDefinition.Location)
-			$this.Context().PopulateFromXml($xmlDefinition.Xml, $this)
-			$this.Context().PopLocation()
+		if($this._xmlDefinitions.Count -gt 0){
+
+			$this.Display("Loading Children [{white}$($this._xmlDefinitions.Count){gray} xmls to load]")
+			$this.PushIndent()
+			foreach($xmlDefinition in $this._xmlDefinitions){
+				# this.Display("Loading XML`r`n$($xmlDefinition.Xml.Outerxml | Format-Xml)`r`n")
+				$this.Context().PushLocation($xmlDefinition.Location)
+				$this.Context().PopulateFromXml($xmlDefinition.Xml, $this)
+				$this.Context().PopLocation()
+			}
+			$this.Display("{darkgreen}[{green}Done{darkgreen}]{gray}")
+			$this._xmlDefinitions.Clear()
+			$this.PopIndent()
 		}
-		$this._xmlDefinitions.Clear()
+		
 		$this.Context().PopLocation()
 		Exit-Block "LoadChildren"
 		
