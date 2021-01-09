@@ -7494,7 +7494,7 @@ class ConfigAutomationContext{
 		}
 
 		$header = $header.Groups[1].Value
-		$matches = [regex]::Matches($header, '([^\=]+)\=([^;]+)')
+		$matches = [regex]::Matches($header, '#([^\=]+)\=([^;]+)')
 		$heading = [hashtable]::new()
 		foreach($match in $matches){
 			$name = $match.Groups[1].Value
