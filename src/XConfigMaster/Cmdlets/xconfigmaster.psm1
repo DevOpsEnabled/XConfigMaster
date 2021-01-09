@@ -4977,13 +4977,14 @@ class UIParameterCollection : HasCollectionContext {
 	}
 	[bool] ValidateRequiredParameters(){
 		
-		
+		$passed = $true
 		foreach($parameter in $this.CurrentScope().Parameters().Items()){
 			if($parameter.IsRequired() -and $parameter.IsMissing()){
-				return $false
+				$this.Error("Parameters", "Exepcted parameter {white}'$($parameter.Name())'{gray} to exists but was missing in scope {white}$($this.CurrentScope().FullName()){gray}")
+				$passed= $false
 			}
 		}	
-		return $true
+		return $passed
 
 	}
 	[bool] Validate([array] $expectedParameters){
