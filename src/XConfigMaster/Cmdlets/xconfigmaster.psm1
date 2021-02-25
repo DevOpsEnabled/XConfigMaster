@@ -1620,6 +1620,8 @@ class HasCollectionContext: HasConsumableContext{
 		foreach($item in $this.Items()){
 			$isValid = $item.RefreshSession() -and $isValid
 		}
+
+		$this._shallowItems = new-object hashtable
 		return $isValid
 	}
     [System.Collections.ArrayList] Items(){
