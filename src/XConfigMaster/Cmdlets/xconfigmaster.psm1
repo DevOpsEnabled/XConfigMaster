@@ -1665,6 +1665,7 @@ class HasCollectionContext: HasConsumableContext{
 	
 	[HasContext] InnerGet([string]$name, [bool] $IncludeParent , [bool] $isOverride, [bool] $ignoreOverride, [bool] $ignoreCurrentScopeCheck, [bool] $includeInvalidItems, [bool] $includeHiddenItems){
 		$action = {
+			$this.RefreshSessionIfNeeded()
 			
 			if(-not $this.Hierarchical()){
 				$foundItem = $this._items[$name.ToLower()]
