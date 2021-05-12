@@ -4611,15 +4611,7 @@ class UIInputStrategyCollection : HasCollectionContext{
 		$sortedStrategies = $this.Items()
 		foreach($strategy in $sortedStrategies){
 			$value = $strategy.ExecuteStrategy()
-			if($value -and ($parameter._properties["SkipParameterization"] -ine "true"))
-			{
-				if($parameter._properties["PlainText"] -ieq "true"){
-					$value = $this.ParameterizeStringAsPlainText($value)
-				}
-				else{
-					$value = $this.ParameterizeString($value)
-				}
-			}
+			
 
 			if($value){
 				return $value
