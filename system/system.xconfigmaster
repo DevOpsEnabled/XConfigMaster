@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<XConfigMaster>
+	<!-- ********************************************************************** -->
+	<!-- *                             I N I T                                * -->
+	<!-- ______________________________________________________________________ -->
+	<!-- * Usage: 1st to be loaded. Should be mostly used for defining        * -->
+	<!-- *        ActionTypes, XConfigmasterExtensionTypes, ParameterTypes,and* -->
+	<!-- *        InputTypes                                                  * -->
+	<!-- ********************************************************************** -->
+	<XConfigMaster.Init>
+	</XConfigMaster.Init>
+	<!-- ********************************************************************** -->
+	<!-- *                          P R E    L O A D                          * -->
+	<!-- ______________________________________________________________________ -->
+	<!-- * Usage: 2nd to be loaded. Should be mostly used for defining        * -->
+	<!-- *        Actions, Templates that are "Ref" elements (Elements with   * -->
+	<!-- *        both "Name"* and "Ref")                                     * -->
+	<!-- ********************************************************************** -->
+	<XConfigMaster.PreLoad>
+		<Parameter Name="NugetExePath" Type="String">
+			<InputStrategy Type="OutputVariable" VariableName="NugetExePath"/>
+		</Parameter>
+        <Action Name=":x" Type="ActionCollection" Ref=":x"/>
+	</XConfigMaster.PreLoad>
+	<!-- ********************************************************************** -->
+	<!-- *                              L O A D                               * -->
+	<!-- ______________________________________________________________________ -->
+	<!-- * Usage: 3nd to be loaded. Should be mostly used for defining the    * -->
+	<!-- *        main logic, Meaning should only contain Referenced elements * -->
+	<!--          (Elements with only "Ref" attribute)                        * -->
+	<!-- ********************************************************************** -->
+	<XConfigMaster.Load>
+        <PipelineVariable Name="file.name" DefaultValue="devops"/>
+
+        <Action Ref=":x" SkipValidate="true">
+			<Action Name="help" Type="ShowActions" SkipValidate="true"/>
+            <Action Name="actiontypes" Type="ShowActionTypes" SkipValidate="true"/>
+			<Action Name="inputtypes" Type="ShowInputTypes"  SkipValidate="true"/>
+			<Action Name="extensiontypes" Type="ShowExtensionTypes"  SkipValidate="true"/>
+			<Action Name="parametertypes" Type="ShowParameterTypes"  SkipValidate="true"/>
+            <Action Name="create" Type="Script" SkipClean="true">
+                <Parameter Name="ScriptType" Value="Inline"/>
+                <Parameter Name="ScriptBlock">
+                    copy "$(xmodule.folders.files)/template.xconfigmaster" ([System.IO.Path]::Combine((Get-Location) , "./$(file.name).xconfigmaster"))
+                </Parameter>
+
+                <Action Name="help" Type="Print">
+                    <Parameter Name="Content">
+                        xcm :x create [-file-name {File Name}]
+                    </Parameter>
+                </Action>
+            </Action>
+        </Action>
+	</XConfigMaster.Load>
+	<!-- ********************************************************************** -->
+	<!-- *                          P O S T   L O A D                         * -->
+	<!-- ______________________________________________________________________ -->
+	<!-- * Usage: 4nd to be loaded. Should be mostly used for defining any    * -->
+	<!--          ImportTemplate logic to consume any defined work in step #3 * -->
+	<!-- ********************************************************************** -->
+	<XConfigMaster.PostLoad>
+        
+	</XConfigMaster.PostLoad>
+</XConfigMaster>

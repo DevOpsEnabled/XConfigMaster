@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<XConfigMaster>
+	<!-- ********************************************************************** -->
+	<!-- *                             I N I T                                * -->
+	<!-- ______________________________________________________________________ -->
+	<!-- * Usage: 1st to be loaded. Should be mostly used for defining        * -->
+	<!-- *        ActionTypes, XConfigmasterExtensionTypes, ParameterTypes,and* -->
+	<!-- *        InputTypes                                                  * -->
+	<!-- ********************************************************************** -->
+	<XConfigMaster.Init>
+	</XConfigMaster.Init>
+	<!-- ********************************************************************** -->
+	<!-- *                          P R E    L O A D                          * -->
+	<!-- ______________________________________________________________________ -->
+	<!-- * Usage: 2nd to be loaded. Should be mostly used for defining        * -->
+	<!-- *        Actions, Templates that are "Ref" elements (Elements with   * -->
+	<!-- *        both "Name"* and "Ref")                                     * -->
+	<!-- ********************************************************************** -->
+	<XConfigMaster.PreLoad>
+	</XConfigMaster.PreLoad>
+	<!-- ********************************************************************** -->
+	<!-- *                              L O A D                               * -->
+	<!-- ______________________________________________________________________ -->
+	<!-- * Usage: 3nd to be loaded. Should be mostly used for defining the    * -->
+	<!-- *        main logic, Meaning should only contain Referenced elements * -->
+	<!--          (Elements with only "Ref" attribute)                        * -->
+	<!-- ********************************************************************** -->
+	<XConfigMaster.Load>
+		<Template Ref=":examples">
+            <Action Name="azure-devops" Type="ActionGroup">
+				<PipelineVariable Name="AzureDevOps.PAT"/>
+				<PipelineVariable Name="AzureDevOps.Project"/>
+				<PipelineVariable Name="AzureDevOps.Instance"/>
+				<PipelineVariable Name="System.BuildId"/>
+				
+				<Action Name="get-build-commit" Type="ActionGroup">
+					<Parameter Name="BuildCommit" DefaultValue="$(@Expression=$(BuildPayload).sourceVersion)"/>
+					<Parameter Name="BuildBranch" DefaultValue="$(@Expression=$(BuildPayload).sourceBranch)"/>
+					<Parameter Name="BuildDefinitionId" DefaultValue="$(@Expression=$(BuildPayload).definition.id)"/>
+					<Parameter Name="BuildId" DefaultValue="$(@Expression=$(BuildPayload).id)"/>
+					<Parameter Name="BuildPayload" Type="Object">
+						<InputStrategy Type="OutputVariable" VariableName="BuildPayload"/>
+					</Parameter>
+
+					<Action Name="rest-call" Type="AzureDevOps">
+						<Parameter Name="PAT" Value="$(AzureDevOps.PAT)"/>
+						<Parameter Name="Method" Value="Get"/>
+						<Parameter Name="Instance" Value="$(AzureDevOps.Instance)"/>
+						<Parameter Name="Project" Value="$(AzureDevOps.Project)"/>
+						<Parameter Name="Area" Value="build"/>
+						<Parameter Name="Resource" Value="builds"/>
+						<Parameter Name="RouteParameters" Value="$(System.BuildId)"/>
+						<Parameter Name="OutputVariable" Value="BuildPayload"/>
+					</Action>
+
+					<Action Name="print-commit" Type="Print">
+						<Parameter Name="Content" Value="Build {magenta}$(BuildId){gray} was built on commit {magenta}$(BuildCommit){gray} from branch {magenta}$(BuildBranch){gray} and definition {magenta}$(BuildDefinitionId){gray}"/>
+					</Action>
+				</Action>
+			</Action>
+		</Template>
+	</XConfigMaster.Load>
+	<!-- ********************************************************************** -->
+	<!-- *                          P O S T   L O A D                         * -->
+	<!-- ______________________________________________________________________ -->
+	<!-- * Usage: 4nd to be loaded. Should be mostly used for defining any    * -->
+	<!--          ImportTemplate logic to consume any defined work in step #3 * -->
+	<!-- ********************************************************************** -->
+	<XConfigMaster.PostLoad>
+	</XConfigMaster.PostLoad>
+</XConfigMaster>

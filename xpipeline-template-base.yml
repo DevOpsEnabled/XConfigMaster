@@ -16,8 +16,12 @@ jobs:
           actionOnMissing: fail
           verbosity: detailed
           rootDirectory: $(ModulePath)
-      - powershell: Update-ModuleManifest -Path "$(ModulePath)/XConfigMaster.psd1" -FileList (Get-ChildItem "*.*" -Recurse | Foreach-Object {$_.FullName})
-        workingDirectory: $(ModulePath)
+      - powershell: |
+          $files = @()
+          copy "./tooling" "$(ModulePath)" -Recurse
+          copy "./system" "$(ModulePath)" -Recurse
+
+        workingDirectory: $(System.DefaultWorkingDirectory)
         name: updateFileList
         displayName: Update Module File List
       - ${{ parameters.prePublishSteps }}

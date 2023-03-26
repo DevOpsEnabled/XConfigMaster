@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<XConfigMaster>
+	<!-- ********************************************************************** -->
+	<!-- *                             I N I T                                * -->
+	<!-- ______________________________________________________________________ -->
+	<!-- * Usage: 1st to be loaded. Should be mostly used for defining        * -->
+	<!-- *        ActionTypes, XConfigmasterExtensionTypes, ParameterTypes,and* -->
+	<!-- *        InputTypes                                                  * -->
+	<!-- ********************************************************************** -->
+	<XConfigMaster.Init>
+	</XConfigMaster.Init>
+	<!-- ********************************************************************** -->
+	<!-- *                          P R E    L O A D                          * -->
+	<!-- ______________________________________________________________________ -->
+	<!-- * Usage: 2nd to be loaded. Should be mostly used for defining        * -->
+	<!-- *        Actions, Templates that are "Ref" elements (Elements with   * -->
+	<!-- *        both "Name"* and "Ref")                                     * -->
+	<!-- ********************************************************************** -->
+	<XConfigMaster.PreLoad>
+	</XConfigMaster.PreLoad>
+	<!-- ********************************************************************** -->
+	<!-- *                              L O A D                               * -->
+	<!-- ______________________________________________________________________ -->
+	<!-- * Usage: 3nd to be loaded. Should be mostly used for defining the    * -->
+	<!-- *        main logic, Meaning should only contain Referenced elements * -->
+	<!--          (Elements with only "Ref" attribute)                        * -->
+	<!-- ********************************************************************** -->
+	<XConfigMaster.Load>
+		<Template Ref=":examples-help">
+			<Action Name="examples1" Type="Print">
+				<Parameter Name="Content">
+					xcm :x examples example1
+				</Parameter>
+			</Action>
+		</Template>
+		<Template Ref=":examples">
+			<Action Name="examples1" Type="ActionGroup">
+				<Action Name="action1" Type="ActionGroup">
+					<Action Name="action2" Type="ActionGroup">
+
+						<Parameter Name="MyParameter" Type="String">
+							<InputStrategy Type="DefaultValue" DefaultValue="Some Default Value"/>
+						</Parameter>
+						
+						<Parameter Name="Reference1" Type="String">
+							<InputStrategy Type="DefaultValue" DefaultValue="$(MyParameter)"/>
+						</Parameter>
+
+						<Action Name="print-reference1" Type="Print">
+							<Parameter Name="Content">
+								Reference1 = $(Reference1)
+							</Parameter>
+						</Action>
+					</Action>
+
+					<Parameter Name="Reference2" Type="String">
+						<InputStrategy Type="DefaultValue" DefaultValue="$(MyParameter)"/>
+					</Parameter>
+
+					<Action Name="print-reference2" Type="Print">
+						<Parameter Name="Content">
+							Reference2 = $(Reference2)
+						</Parameter>
+					</Action>
+				</Action>
+
+			</Action>
+		</Template>
+	</XConfigMaster.Load>
+	<!-- ********************************************************************** -->
+	<!-- *                          P O S T   L O A D                         * -->
+	<!-- ______________________________________________________________________ -->
+	<!-- * Usage: 4nd to be loaded. Should be mostly used for defining any    * -->
+	<!--          ImportTemplate logic to consume any defined work in step #3 * -->
+	<!-- ********************************************************************** -->
+	<XConfigMaster.PostLoad>
+	</XConfigMaster.PostLoad>
+</XConfigMaster>

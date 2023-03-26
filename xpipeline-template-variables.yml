@@ -4,7 +4,13 @@ variables:
   - group: secrets-base
   - group: variables-base
   - name: ModulePath
-    value: $(System.DefaultWorkingDirectory)/modules/XConfigMaster
+    value: $(System.DefaultWorkingDirectory)/src/XConfigMaster
+  - name: XConfigMaster.Major
+    value: 2
+  - name: XConfigMaster.Minor
+    value: 2
+  - name: XConfigMaster.Prerelease
+    value: ''
           
           
     
